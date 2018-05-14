@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Fighter.generated.h"
 
 UCLASS()
@@ -15,17 +19,40 @@ public:
 	// Sets default values for this pawn's properties
 	AFighter();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	UPROPERTY(VisibleAnywhere)
+	UCapsuleComponent* CapsuleComponent;
 	
-	
+	UPROPERTY(VisibleAnywhere)
+	USpringArmComponent* SpringArmComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* CameraComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* BodyMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* HeadMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* ChestMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* LegMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* LeftHandMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* RightHandMeshComponent;
 };

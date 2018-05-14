@@ -14,7 +14,11 @@ class RITES_API AFighterController : public APlayerController
 {
 	GENERATED_BODY()
 	
-	
+public:
+
+	void SetupInputComponent() override;
+
+protected:
 	
 	
 };

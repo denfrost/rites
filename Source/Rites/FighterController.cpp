@@ -2,6 +2,9 @@
 
 #include "FighterController.h"
 
+void AFighterController::SetupInputComponent()
+{
 
+}
 
 
