@@ -44,10 +44,7 @@ void AFighter::Tick(float DeltaTime)
 
 }
 
-// Called to bind functionality to input
-void AFighter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AFighter::Move(FVector Direction)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	Direction;
 }
-

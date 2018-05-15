@@ -16,9 +16,29 @@ class RITES_API AFighterController : public APlayerController
 	
 public:
 
+	AFighterController();
+
 	void SetupInputComponent() override;
 
 protected:
-	
-	
+
+	// Input handlers
+	void JumpPressed();
+	void JumpReleased();
+	void CastLeftPressed();
+	void CastLeftReleased();
+	void CastRightPressed();
+	void CastRightReleased();
+	void InventoryPressed();
+	void OptionsPressed();
+	void RechargePressed();
+	void RechargeReleased();
+	void ActivatePressed();
+	void ActivateReleased();
+	void MapPressed();
+	void RotateHorizontal(float AxisValue);
+	void RotateVertical(float AxisValue);
+	void MoveForward(float AxisValue);
+	void MoveRight(float AxisValue);
+
 };
