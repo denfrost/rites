@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "InputState.h"
 #include "FighterController.generated.h"
 
 /**
@@ -19,6 +20,8 @@ public:
 	AFighterController();
 
 	void SetupInputComponent() override;
+
+	const FInputState& GetInputState() const;
 
 protected:
 
@@ -40,5 +43,7 @@ protected:
 	void RotateVertical(float AxisValue);
 	void MoveForward(float AxisValue);
 	void MoveRight(float AxisValue);
+
+	FInputState InputState;
 
 };

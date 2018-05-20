@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Fighter.h"
+#include "FighterController.h"
+#include "FighterAnimInstance.h"
 
 
 // Sets default values
@@ -35,6 +37,15 @@ void AFighter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	AnimInstance = Cast<UFighterAnimInstance>(BodyMeshComponent->GetAnimInstance());
+	ensure(AnimInstance != nullptr);
+
+	// Set this anim instance to control the other skeletal meshes
+	HeadMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
+	ChestMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
+	LegMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
+	LeftHandMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
+	RightHandMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
 }
 
 // Called every frame
@@ -42,9 +53,55 @@ void AFighter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	AFighterController* FighterController = Cast<AFighterController>(GetController());
+
+	if (FighterController != nullptr)
+	{
+		const FInputState& InputState = FighterController->GetInputState();
+
+		UpdateMovement(DeltaTime, InputState);
+		UpdateOrientation(DeltaTime, InputState);
+		UpdateCasting(DeltaTime, InputState);
+		UpdateRecharge(DeltaTime, InputState);
+		UpdateActivate(DeltaTime, InputState);
+	}
 }
 
 void AFighter::Move(FVector Direction)
 {
 	Direction;
+}
+
+void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
+{
+	FVector OldLocation = GetActorLocation();
+	FVector MoveDirection = FVector(InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f);
+	FVector MoveVelocity = MoveDirection * Stats.MoveSpeed;
+	FVector NewLocation = OldLocation + MoveVelocity;
+
+	SetActorLocation(NewLocation);
+	
+	// Update Animation Variables
+	AnimInstance->Velocity = MoveVelocity;
+	AnimInstance->InputDirection = InputState.MoveDirection;
+}
+
+void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
+{
+
+}
+
+void AFighter::UpdateCasting(float DeltaTime, const FInputState& InputState)
+{
+
+}
+
+void AFighter::UpdateRecharge(float DeltaTime, const FInputState& InputState)
+{
+
+}
+
+void AFighter::UpdateActivate(float DeltaTime, const FInputState& InputState)
+{
+
 }

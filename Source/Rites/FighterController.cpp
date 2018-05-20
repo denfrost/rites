@@ -38,33 +38,38 @@ void AFighterController::SetupInputComponent()
 	}
 }
 
+const FInputState& AFighterController::GetInputState() const
+{
+	return InputState;
+}
+
 void AFighterController::JumpPressed()
 {
-
+	InputState.bJumpDown = true;
 }
 
 void AFighterController::JumpReleased()
 {
-
+	InputState.bJumpDown = false;
 }
 void AFighterController::CastLeftPressed()
 {
-
+	InputState.bCastLeftDown = true;
 }
 
 void AFighterController::CastLeftReleased()
 {
-
+	InputState.bCastLeftDown = false;
 }
 
 void AFighterController::CastRightPressed()
 {
-
+	InputState.bCastRightDown = true;
 }
 
 void AFighterController::CastRightReleased()
 {
-
+	InputState.bCastRightDown = false;
 }
 
 void AFighterController::InventoryPressed()
@@ -79,22 +84,22 @@ void AFighterController::OptionsPressed()
 
 void AFighterController::RechargePressed()
 {
-
+	InputState.bRechargeDown = true;
 }
 
 void AFighterController::RechargeReleased()
 {
-
+	InputState.bRechargeDown = false;
 }
 
 void AFighterController::ActivatePressed()
 {
-
+	InputState.bActivateDown = true;
 }
 
 void AFighterController::ActivateReleased()
 {
-
+	InputState.bActivateDown = true;
 }
 
 void AFighterController::MapPressed()
@@ -104,20 +109,20 @@ void AFighterController::MapPressed()
 
 void AFighterController::RotateHorizontal(float AxisValue)
 {
-	AxisValue;
+	InputState.RotateDirection.X = AxisValue;
 }
 
 void AFighterController::RotateVertical(float AxisValue)
 {
-	AxisValue;
+	InputState.RotateDirection.Y = AxisValue;
 }
 
 void AFighterController::MoveForward(float AxisValue)
 {
-	AxisValue;
+	InputState.MoveDirection.Y = AxisValue;
 }
 
 void AFighterController::MoveRight(float AxisValue)
 {
-	AxisValue;
+	InputState.MoveDirection.X = AxisValue;
 }

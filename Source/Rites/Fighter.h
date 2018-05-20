@@ -8,7 +8,13 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+
+#include "FighterStats.h"
+#include "InputState.h"
+
 #include "Fighter.generated.h"
+
+class UFighterAnimInstance;
 
 UCLASS()
 class RITES_API AFighter : public APawn
@@ -27,6 +33,16 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	void UpdateMovement(float DeltaTime, const FInputState& InputState);
+
+	void UpdateOrientation(float DeltaTime, const FInputState& InputState);
+
+	void UpdateCasting(float DeltaTime, const FInputState& InputState);
+
+	void UpdateRecharge(float DeltaTime, const FInputState& InputState);
+
+	void UpdateActivate(float DeltaTime, const FInputState& InputState);
 
 	UPROPERTY(VisibleAnywhere)
 	UCapsuleComponent* CapsuleComponent;
@@ -54,4 +70,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* RightHandMeshComponent;
+
+	UPROPERTY(EditAnywhere)
+	FFighterStats Stats;
+
+	UFighterAnimInstance* AnimInstance;
 };
