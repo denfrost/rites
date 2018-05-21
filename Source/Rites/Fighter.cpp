@@ -75,7 +75,7 @@ void AFighter::Move(FVector Direction)
 void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
 {
 	FVector OldLocation = GetActorLocation();
-	FVector MoveDirection = FVector(InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f);
+	FVector MoveDirection = FVector(InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
 	FVector MoveVelocity = MoveDirection * Stats.MoveSpeed;
 	FVector NewLocation = OldLocation + (MoveVelocity * DeltaTime);
 
