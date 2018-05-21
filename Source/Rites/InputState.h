@@ -12,11 +12,6 @@ struct FInputState
 
 public:
 
-	FInputState()
-	{
-
-	}
-
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D MoveDirection;
 

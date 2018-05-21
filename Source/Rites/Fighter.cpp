@@ -3,7 +3,7 @@
 #include "Fighter.h"
 #include "FighterController.h"
 #include "FighterAnimInstance.h"
-
+#include "Engine/Engine.h"
 
 // Sets default values
 AFighter::AFighter()
@@ -77,7 +77,7 @@ void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
 	FVector OldLocation = GetActorLocation();
 	FVector MoveDirection = FVector(InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f);
 	FVector MoveVelocity = MoveDirection * Stats.MoveSpeed;
-	FVector NewLocation = OldLocation + MoveVelocity;
+	FVector NewLocation = OldLocation + (MoveVelocity * DeltaTime);
 
 	SetActorLocation(NewLocation);
 	
@@ -88,7 +88,22 @@ void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
 
 void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
 {
+	// TODO: Replace the constant sensitivity with user setting sensitivity.
+	const float TempSensitivity = 10.0f;
+	const float MinSpringArmPitch = -50.0f;
+	const float MaxSpringArmPitch = 80.0f;
 
+	FRotator NewActorRotation = GetActorRotation();
+	FRotator NewSpringArmRotation = SpringArmComponent->RelativeRotation;
+
+	float DeltaYaw = InputState.RotateDirection.X * TempSensitivity * DeltaTime;
+	float DeltaPitch = InputState.RotateDirection.Y * TempSensitivity * DeltaTime;
+
+	NewActorRotation.Yaw = FMath::Fmod(NewActorRotation.Yaw + DeltaYaw, 360.0f);
+	NewSpringArmRotation.Pitch = FMath::Clamp(NewSpringArmRotation.Pitch + DeltaPitch, MinSpringArmPitch, MaxSpringArmPitch);
+
+	SetActorRotation(NewActorRotation);
+	SpringArmComponent->SetRelativeRotation(NewSpringArmRotation);
 }
 
 void AFighter::UpdateCasting(float DeltaTime, const FInputState& InputState)
