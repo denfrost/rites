@@ -30,6 +30,8 @@ AFighter::AFighter()
 	LegMeshComponent->SetupAttachment(BodyMeshComponent);
 	LeftHandMeshComponent->SetupAttachment(BodyMeshComponent);
 	RightHandMeshComponent->SetupAttachment(BodyMeshComponent);
+
+	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
 }
 
 // Called when the game starts or when spawned
@@ -64,6 +66,8 @@ void AFighter::Tick(float DeltaTime)
 		UpdateCasting(DeltaTime, InputState);
 		UpdateRecharge(DeltaTime, InputState);
 		UpdateActivate(DeltaTime, InputState);
+
+		PreviousInputState = InputState;
 	}
 }
 
@@ -75,11 +79,11 @@ void AFighter::Move(FVector Direction)
 void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
 {
 	FVector OldLocation = GetActorLocation();
-	FVector MoveDirection = FVector(InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
+	FVector MoveDirection = FVector(-InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
 	FVector MoveVelocity = MoveDirection * Stats.MoveSpeed;
 	FVector NewLocation = OldLocation + (MoveVelocity * DeltaTime);
 
-	SetActorLocation(NewLocation);
+	SetActorLocation(NewLocation, true);
 	
 	// Update Animation Variables
 	AnimInstance->Velocity = MoveVelocity;

@@ -45,5 +45,4 @@ protected:
 	void MoveRight(float AxisValue);
 
 	FInputState InputState;
-
 };

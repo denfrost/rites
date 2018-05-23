@@ -75,4 +75,6 @@ protected:
 	FFighterStats Stats;
 
 	UFighterAnimInstance* AnimInstance;
+
+	FInputState PreviousInputState;
 };
