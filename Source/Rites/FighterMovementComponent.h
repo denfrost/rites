@@ -20,11 +20,6 @@ public:
 
 	void Move(float DeltaTime, FVector Velocity);
 
-	bool MoveHeroVert(float DeltaTime, float VertSpeed, int& nUpwardCollision);
-
-protected:
-
-	UPROPERTY(EditAnywhere)
-	float MaxGroundingInclineAngle = 45.0f;
+	bool MoveVert(float DeltaTime, float VertSpeed, bool& bUpwardCollision);
 	
 };

@@ -4,6 +4,8 @@
 #include "FighterController.h"
 #include "FighterAnimInstance.h"
 #include "FighterMovementComponent.h"
+#include "Utilities.h"
+#include "Constants.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -64,11 +66,14 @@ void AFighter::Tick(float DeltaTime)
 	{
 		const FInputState& InputState = FighterController->GetInputState();
 
-		UpdateMovement(DeltaTime, InputState);
+		UpdateJump(DeltaTime, InputState);
+		UpdateMovementXY(DeltaTime, InputState);
+		UpdateMovementZ(DeltaTime, InputState);
 		UpdateOrientation(DeltaTime, InputState);
 		UpdateCasting(DeltaTime, InputState);
 		UpdateRecharge(DeltaTime, InputState);
 		UpdateActivate(DeltaTime, InputState);
+		UpdateAnimationState(DeltaTime, InputState);
 
 		PreviousInputState = InputState;
 	}
@@ -79,25 +84,96 @@ void AFighter::Move(FVector Direction)
 	Direction;
 }
 
-void AFighter::UpdateMovement(float DeltaTime, const FInputState& InputState)
+void AFighter::UpdateJump(float DeltaTime, const FInputState& InputState)
+{
+	if (bGrounded &&
+		InputState.bJumpDown &&
+		!PreviousInputState.bJumpDown)
+	{
+		bGrounded = false;
+		bJumping = true;
+		ExternalVelocity.Z = Stats.JumpSpeed;
+	}
+}
+
+void AFighter::UpdateMovementXY(float DeltaTime, const FInputState& InputState)
 {
 	FVector OldLocation = GetActorLocation();
+
 	FVector MoveDirection = FVector(-InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
 	MoveDirection.Normalize();
 
-	FVector MoveVelocity = MoveDirection * Stats.MoveSpeed;
-	
-	// Update Animation Variables
-	AnimInstance->Velocity = MoveVelocity;
-	AnimInstance->InputDirection = InputState.MoveDirection;
+	MovementVelocity = MoveDirection * Stats.MoveSpeed;
 
-	MovementComponent->Move(DeltaTime, MoveVelocity);
+	MovementComponent->Move(DeltaTime, MovementVelocity);
+}
+
+void AFighter::UpdateMovementZ(float DeltaTime, const FInputState& InputState)
+{
+	// If not grounded, then apply gravity and then check to see if the fighter is now grounded.
+	if (!bGrounded)
+	{
+		if (bJumping &&
+			InputState.bJumpDown)
+		{
+			ExternalVelocity.Z -= Constants::Gravity * DeltaTime * Constants::JumpGravityRatio;
+		}
+		else
+		{
+			ExternalVelocity.Z -= Constants::Gravity * DeltaTime;
+		}
+
+		bool bUpwardCollision = false;
+		bGrounded = MovementComponent->MoveVert(DeltaTime, ExternalVelocity.Z, bUpwardCollision);
+
+		if (bUpwardCollision)
+		{
+			ExternalVelocity.Z = 0.0f;
+		}
+
+		if (bGrounded)
+		{
+			ExternalVelocity.Z = 0.0f;
+			bJumping = false;
+		}
+	}
+
+	// If the fighter is grounded, then attempt to snap him to the ground
+	// If there is no ground below, then set the fighter as not grounded.
+	if (bGrounded)
+	{
+		FVector CurrentLocation = GetActorLocation();
+		FVector NewLocation = CurrentLocation;
+		NewLocation.Z -= Constants::GroundedSnapDistance;
+
+		FHitResult HitResult;
+		SetActorLocation(NewLocation, true, &HitResult);
+
+		if (HitResult.Actor != nullptr)
+		{
+			// The hero is hitting some collision mesh but...
+			// We need to make sure the angle of impact is not too steep.
+			// If it is too steep, then the hero is no longer grounded and
+			// will be affected by gravity.
+			float Incline = Utils::FindAngleBetweenVectors(HitResult.ImpactNormal, FVector::UpVector);
+
+			if (Incline > Constants::MaxGroundingInclineAngle)
+			{
+				bGrounded = false;
+			}
+		}
+		else
+		{
+			SetActorLocation(CurrentLocation, false);
+			bGrounded = false;
+		}
+	}
 }
 
 void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
 {
 	// TODO: Replace the constant sensitivity with user setting sensitivity.
-	const float TempSensitivity = 10.0f;
+	const float TempSensitivity = 40.0f;
 	const float MinSpringArmPitch = -50.0f;
 	const float MaxSpringArmPitch = 80.0f;
 
@@ -127,4 +203,12 @@ void AFighter::UpdateRecharge(float DeltaTime, const FInputState& InputState)
 void AFighter::UpdateActivate(float DeltaTime, const FInputState& InputState)
 {
 
+}
+
+void AFighter::UpdateAnimationState(float DeltaTime, const FInputState& InputState)
+{
+	AnimInstance->bJumping = bJumping;
+	AnimInstance->bGrounded = bGrounded;
+	AnimInstance->Velocity = MovementVelocity;
+	AnimInstance->InputDirection = InputState.MoveDirection;
 }

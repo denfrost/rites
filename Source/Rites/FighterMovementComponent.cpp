@@ -1,16 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "FighterMovementComponent.h"
-
-namespace
-{
-	float FindAngleBetweenVectors(FVector v1, FVector v2)
-	{
-		v1.Normalize();
-		v2.Normalize();
-
-		return FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(v1, v2)));
-	}
-}
+#include "Utilities.h"
+#include "Constants.h"
 
 void UFighterMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
 {
@@ -40,10 +31,10 @@ void UFighterMovementComponent::Move(float fDeltaTime, FVector Velocity)
 	}
 }
 
-bool UFighterMovementComponent::MoveHeroVert(float fDeltaTime, float fVertSpeed, int& nUpwardCollision)
+bool UFighterMovementComponent::MoveVert(float fDeltaTime, float fVertSpeed, bool& bUpwardCollision)
 {
-	// Set flag to 0 for no upward collision
-	nUpwardCollision = 0;
+	// Set flag to false for no upward collision
+	bUpwardCollision = false;
 
 	if (!PawnOwner || !UpdatedComponent || ShouldSkipUpdate(fDeltaTime))
 	{
@@ -58,13 +49,13 @@ bool UFighterMovementComponent::MoveHeroVert(float fDeltaTime, float fVertSpeed,
 		fVertSpeed <= 0.0f)
 	{
 		// Save the initial normal first, as the Hit object is changed in Slide function call
-		float fIncline = FindAngleBetweenVectors(Hit.ImpactNormal, FVector(0.0f, 0.0f, 1.0f));
+		float fIncline = Utils::FindAngleBetweenVectors(Hit.ImpactNormal, FVector(0.0f, 0.0f, 1.0f));
 
 		// Slide the object on landing
 		SlideAlongSurface(FVector(0.0f, 0.0f, fVertSpeed * fDeltaTime), 1.0f - Hit.Time, Hit.Normal, Hit);
 
 		// It hit something, but only return grounded as true if the incline isn't steep
-		if (fIncline < MaxGroundingInclineAngle)
+		if (fIncline < Constants::MaxGroundingInclineAngle)
 		{
 			return true;
 		}
@@ -72,7 +63,7 @@ bool UFighterMovementComponent::MoveHeroVert(float fDeltaTime, float fVertSpeed,
 	else if (Hit.IsValidBlockingHit() &&
 		fVertSpeed > 0.0f)
 	{
-		nUpwardCollision = 1;
+		bUpwardCollision = true;
 	}
 
 	return false;

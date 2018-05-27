@@ -35,7 +35,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void UpdateMovement(float DeltaTime, const FInputState& InputState);
+	void UpdateJump(float DeltaTime, const FInputState& InputState);
+
+	void UpdateMovementXY(float DeltaTime, const FInputState& InputState);
+
+	void UpdateMovementZ(float DeltaTime, const FInputState& InputState);
 
 	void UpdateOrientation(float DeltaTime, const FInputState& InputState);
 
@@ -44,6 +48,8 @@ protected:
 	void UpdateRecharge(float DeltaTime, const FInputState& InputState);
 
 	void UpdateActivate(float DeltaTime, const FInputState& InputState);
+
+	void UpdateAnimationState(float DeltaTime, const FInputState& InputState);
 
 	UPROPERTY(VisibleAnywhere)
 	UCapsuleComponent* CapsuleComponent;
@@ -81,4 +87,13 @@ protected:
 	UFighterAnimInstance* AnimInstance;
 
 	FInputState PreviousInputState;
+
+	UPROPERTY(EditAnywhere)
+	float AirControlRatio = 0.4f;
+
+	bool bGrounded;
+	bool bJumping;
+
+	FVector MovementVelocity;
+	FVector ExternalVelocity;
 };
