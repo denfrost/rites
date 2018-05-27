@@ -15,6 +15,7 @@
 #include "Fighter.generated.h"
 
 class UFighterAnimInstance;
+class UFighterMovementComponent;
 
 UCLASS()
 class RITES_API AFighter : public APawn
@@ -70,6 +71,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	USkeletalMeshComponent* RightHandMeshComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UFighterMovementComponent* MovementComponent;
 
 	UPROPERTY(EditAnywhere)
 	FFighterStats Stats;

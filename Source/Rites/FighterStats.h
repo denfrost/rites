@@ -14,7 +14,17 @@ public:
 
 	FFighterStats()
 	{
-
+		Health = 100;
+		MaxHealth = Health;
+		MoveSpeed = 400.0f;
+		JumpSpeed = 550.0f;
+		ReloadSpeed = 2.0f;
+		bInvulnerable = false;
+		bInvisible = false;
+		bFlying = false;
+		bStunned = false;
+		bSlowed = false;
+		bMuted = false;
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
