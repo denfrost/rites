@@ -8,4 +8,5 @@ namespace Constants
 	float JumpGravityRatio = 0.8f;
 	float GroundedSnapDistance = 20.0f;
 	float MaxGroundingInclineAngle = 45.0f;
+	float FighterBackupSpeedMultiplier = 0.7f;
 }

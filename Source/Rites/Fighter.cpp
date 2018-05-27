@@ -105,6 +105,11 @@ void AFighter::UpdateMovementXY(float DeltaTime, const FInputState& InputState)
 
 	MovementVelocity = MoveDirection * Stats.MoveSpeed;
 
+	if (InputState.MoveDirection.Y < 0.0f)
+	{
+		MovementVelocity *= Constants::FighterBackupSpeedMultiplier;
+	}
+
 	MovementComponent->Move(DeltaTime, MovementVelocity);
 }
 
@@ -174,7 +179,7 @@ void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
 {
 	// TODO: Replace the constant sensitivity with user setting sensitivity.
 	const float TempSensitivity = 40.0f;
-	const float MinSpringArmPitch = -50.0f;
+	const float MinSpringArmPitch = -80.0f;
 	const float MaxSpringArmPitch = 80.0f;
 
 	FRotator NewActorRotation = GetActorRotation();
