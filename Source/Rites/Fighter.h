@@ -31,6 +31,8 @@ public:
 
 	void Move(FVector Direction);
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -49,7 +51,16 @@ protected:
 
 	void UpdateActivate(float DeltaTime, const FInputState& InputState);
 
-	void UpdateAnimationState(float DeltaTime, const FInputState& InputState);
+	void UpdateAnimationState();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_SyncTransform(FVector location, FRotator rotation);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void M_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
 
 	UPROPERTY(VisibleAnywhere)
 	UCapsuleComponent* CapsuleComponent;
@@ -81,19 +92,18 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UFighterMovementComponent* MovementComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Replicated)
 	FFighterStats Stats;
 
 	UFighterAnimInstance* AnimInstance;
 
 	FInputState PreviousInputState;
 
-	UPROPERTY(EditAnywhere)
-	float AirControlRatio = 0.4f;
-
 	bool bGrounded;
 	bool bJumping;
 
+	FVector2D InputDirection;
 	FVector MovementVelocity;
+
 	FVector ExternalVelocity;
 };

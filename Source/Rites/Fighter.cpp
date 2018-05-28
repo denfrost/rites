@@ -7,6 +7,7 @@
 #include "Utilities.h"
 #include "Constants.h"
 #include "Engine/Engine.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AFighter::AFighter()
@@ -37,6 +38,9 @@ AFighter::AFighter()
 
 	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
 	MovementComponent->UpdatedComponent = RootComponent;
+
+	bReplicates = true;
+	bReplicateMovement = true;
 }
 
 // Called when the game starts or when spawned
@@ -55,6 +59,13 @@ void AFighter::BeginPlay()
 	RightHandMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
 }
 
+void AFighter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AFighter, Stats);
+}
+
 // Called every frame
 void AFighter::Tick(float DeltaTime)
 {
@@ -62,7 +73,8 @@ void AFighter::Tick(float DeltaTime)
 
 	AFighterController* FighterController = Cast<AFighterController>(GetController());
 
-	if (FighterController != nullptr)
+	if (IsLocallyControlled() &&
+		FighterController != nullptr)
 	{
 		const FInputState& InputState = FighterController->GetInputState();
 
@@ -73,10 +85,14 @@ void AFighter::Tick(float DeltaTime)
 		UpdateCasting(DeltaTime, InputState);
 		UpdateRecharge(DeltaTime, InputState);
 		UpdateActivate(DeltaTime, InputState);
-		UpdateAnimationState(DeltaTime, InputState);
+
+		S_SyncTransform(GetActorLocation(), GetActorRotation());
+		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
 
 		PreviousInputState = InputState;
 	}
+
+	UpdateAnimationState();
 }
 
 void AFighter::Move(FVector Direction)
@@ -99,12 +115,14 @@ void AFighter::UpdateJump(float DeltaTime, const FInputState& InputState)
 void AFighter::UpdateMovementXY(float DeltaTime, const FInputState& InputState)
 {
 	FVector OldLocation = GetActorLocation();
+	InputDirection = InputState.MoveDirection;
 
-	FVector MoveDirection = FVector(-InputState.MoveDirection.X, InputState.MoveDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
+	FVector MoveDirection = FVector(-InputDirection.X, InputDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
 	MoveDirection.Normalize();
 
 	MovementVelocity = MoveDirection * Stats.MoveSpeed;
 
+	// Apply backwards movement penalty
 	if (InputState.MoveDirection.Y < 0.0f)
 	{
 		MovementVelocity *= Constants::FighterBackupSpeedMultiplier;
@@ -210,10 +228,47 @@ void AFighter::UpdateActivate(float DeltaTime, const FInputState& InputState)
 
 }
 
-void AFighter::UpdateAnimationState(float DeltaTime, const FInputState& InputState)
+void AFighter::UpdateAnimationState()
 {
 	AnimInstance->bJumping = bJumping;
 	AnimInstance->bGrounded = bGrounded;
 	AnimInstance->Velocity = MovementVelocity;
-	AnimInstance->InputDirection = InputState.MoveDirection;
+	AnimInstance->InputDirection = InputDirection;
+}
+
+void AFighter::S_SyncTransform_Implementation(FVector location, FRotator rotation)
+{
+	SetActorLocation(location);
+	SetActorRotation(rotation);
+}
+
+bool AFighter::S_SyncTransform_Validate(FVector location, FRotator rotation)
+{
+	return true;
+}
+
+void AFighter::S_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+{
+	this->InputDirection = InputDirection;
+	this->MovementVelocity = Velocity;
+	this->bJumping = bJumping;
+	this->bGrounded = bGrounded;
+
+	M_SyncAnimState(InputDirection, Velocity, bJumping, bGrounded);
+}
+
+bool AFighter::S_SyncAnimState_Validate(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+{
+	return true;
+}
+
+void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+{
+	if (!IsLocallyControlled())
+	{
+		this->bJumping = bJumping;
+		this->bGrounded = bGrounded;
+		this->MovementVelocity = Velocity;
+		this->InputDirection = InputDirection;
+	}
 }

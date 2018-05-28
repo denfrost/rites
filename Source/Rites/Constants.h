@@ -10,5 +10,7 @@ namespace Constants
 	extern float JumpGravityRatio;
 	extern float GroundedSnapDistance;
 	extern float MaxGroundingInclineAngle;
+
 	extern float FighterBackupSpeedMultiplier;
+	extern float FighterAirControlSpeedMultiplier;
 }
