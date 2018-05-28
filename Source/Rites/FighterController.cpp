@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "FighterController.h"
+#include "RitesGameInstance.h"
 
 AFighterController::AFighterController()
 {
@@ -74,7 +75,17 @@ void AFighterController::CastRightReleased()
 
 void AFighterController::InventoryPressed()
 {
+	URitesGameInstance* GameInstance = Cast<URitesGameInstance>(GetGameInstance());
+	ensure(GameInstance != nullptr);
 
+	if (!GameInstance->IsMenuOpen(TEXT("Inventory")))
+	{
+		GameInstance->OpenMenu(TEXT("Inventory"));
+	}
+	else
+	{
+		GameInstance->CloseMenu(TEXT("Inventory"));
+	}
 }
 
 void AFighterController::OptionsPressed()
