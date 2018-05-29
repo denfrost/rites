@@ -78,14 +78,7 @@ void AFighterController::InventoryPressed()
 	URitesGameInstance* GameInstance = Cast<URitesGameInstance>(GetGameInstance());
 	ensure(GameInstance != nullptr);
 
-	if (!GameInstance->IsMenuOpen(TEXT("Inventory")))
-	{
-		GameInstance->OpenMenu(TEXT("Inventory"));
-	}
-	else
-	{
-		GameInstance->CloseMenu(TEXT("Inventory"));
-	}
+	GameInstance->ToggleMenu(TEXT("Inventory"));
 }
 
 void AFighterController::OptionsPressed()

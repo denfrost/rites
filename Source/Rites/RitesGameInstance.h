@@ -7,15 +7,14 @@
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 #include "RitesGameInstance.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class RITES_API URitesGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 
 public:
+
+	URitesGameInstance();
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OpenMenu(const FString& Name);
@@ -25,5 +24,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure, BlueprintCallable)
 	bool IsMenuOpen(const FString& Name);
+
+	UFUNCTION(BlueprintCallable)
+	void ToggleMenu(const FString& Name);
 	
 };

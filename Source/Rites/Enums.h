@@ -25,3 +25,11 @@ enum class EFighterOverrideAnimationState : uint8
 	CastRight,
 	Recharge
 };
+
+UENUM(BlueprintType)
+enum class EGemColor : uint8
+{
+	Red,
+	Green,
+	Blue
+};
