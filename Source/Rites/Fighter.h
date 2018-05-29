@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -16,6 +17,7 @@
 
 class UFighterAnimInstance;
 class UFighterMovementComponent;
+class ADrop;
 
 UCLASS()
 class RITES_API AFighter : public APawn
@@ -32,6 +34,12 @@ public:
 	void Move(FVector Direction);
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+	UFUNCTION()
+	void BeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
+
+	UFUNCTION()
+	void EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
 	// Called when the game starts or when spawned
@@ -53,6 +61,8 @@ protected:
 
 	void UpdateAnimationState();
 
+// Network Functions
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void S_SyncTransform(FVector location, FRotator rotation);
 
@@ -62,8 +72,13 @@ protected:
 	UFUNCTION(NetMulticast, Unreliable)
 	void M_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
 
+// Components
+
 	UPROPERTY(VisibleAnywhere)
 	UCapsuleComponent* CapsuleComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* PickupSphereComponent;
 	
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComponent;
@@ -92,6 +107,8 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UFighterMovementComponent* MovementComponent;
 
+// Properties
+
 	UPROPERTY(EditAnywhere, Replicated)
 	FFighterStats Stats;
 
@@ -106,4 +123,6 @@ protected:
 	FVector MovementVelocity;
 
 	FVector ExternalVelocity;
+
+	TArray<ADrop*> DropsInPickupRadius;
 };

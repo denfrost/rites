@@ -33,3 +33,14 @@ enum class EGemColor : uint8
 	Green,
 	Blue
 };
+
+UENUM(BlueprintType)
+enum class EEquipSlots : uint8
+{
+	Head,
+	Chest,
+	Legs,
+	LeftGlove,
+	RightGlove
+
+};

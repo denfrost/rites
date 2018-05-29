@@ -6,6 +6,7 @@
 #include "FighterMovementComponent.h"
 #include "Utilities.h"
 #include "Constants.h"
+#include "Drop.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
@@ -16,6 +17,7 @@ AFighter::AFighter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
+	PickupSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	BodyMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BodyMesh"));
@@ -27,6 +29,7 @@ AFighter::AFighter()
 	MovementComponent = CreateDefaultSubobject<UFighterMovementComponent>(TEXT("Movement"));
 
 	RootComponent = CapsuleComponent;
+	PickupSphereComponent->SetupAttachment(RootComponent);
 	SpringArmComponent->SetupAttachment(RootComponent);
 	CameraComponent->SetupAttachment(SpringArmComponent);
 	BodyMeshComponent->SetupAttachment(RootComponent);
@@ -38,6 +41,13 @@ AFighter::AFighter()
 
 	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
 	MovementComponent->UpdatedComponent = RootComponent;
+
+	PickupSphereComponent->SetCollisionProfileName(TEXT("OverlapAll"));
+	PickupSphereComponent->bGenerateOverlapEvents = true;
+	PickupSphereComponent->InitSphereRadius(120.0f);
+
+	PickupSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AFighter::BeginPickupSphereOverlap);
+	PickupSphereComponent->OnComponentEndOverlap.AddDynamic(this, &AFighter::EndBeginPickupSphereOverlap);
 
 	bReplicates = true;
 	bReplicateMovement = true;
@@ -64,6 +74,35 @@ void AFighter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFighter, Stats);
+}
+
+
+void AFighter::BeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+{
+	if (HasAuthority() || IsLocallyControlled())
+	{
+		ADrop* OtherDrop = Cast<ADrop>(OtherActor);
+
+		if (OtherDrop != nullptr)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Drop Add To Pickup List"));
+			DropsInPickupRadius.Add(OtherDrop);
+		}
+	}
+}
+
+void AFighter::EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (HasAuthority() || IsLocallyControlled())
+	{
+		ADrop* OtherDrop = Cast<ADrop>(OtherActor);
+
+		if (OtherDrop != nullptr)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Drop Removed From Pickup List"));
+			DropsInPickupRadius.Remove(OtherDrop);
+		}
+	}
 }
 
 // Called every frame
