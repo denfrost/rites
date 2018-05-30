@@ -79,6 +79,17 @@ void AFighterController::InventoryPressed()
 	ensure(GameInstance != nullptr);
 
 	GameInstance->ToggleMenu(TEXT("Inventory"));
+
+	if (GameInstance->IsMenuOpen("Inventory"))
+	{
+		SetInputMode(FInputModeUIOnly());
+		bShowMouseCursor = true;
+	}
+	else
+	{
+		SetInputMode(FInputModeGameOnly());
+		bShowMouseCursor = false;
+	}
 }
 
 void AFighterController::OptionsPressed()
