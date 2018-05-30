@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Item.h"
+#include "Enums.h"
 #include "GemSocket.h"
 #include "Gear.generated.h"
 
@@ -24,4 +25,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	int32 Armor;
 	
+	UPROPERTY(EditAnywhere)
+	EGearSlotType SlotType;
 };
