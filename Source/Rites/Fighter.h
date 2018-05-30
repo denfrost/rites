@@ -18,6 +18,8 @@
 class UFighterAnimInstance;
 class UFighterMovementComponent;
 class ADrop;
+class UItem;
+class UGear;
 
 UCLASS()
 class RITES_API AFighter : public APawn
@@ -40,6 +42,14 @@ public:
 
 	UFUNCTION()
 	void EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+	//void GetCarriedItems(TArray<UItem*>& OutItems);
+	TArray<UItem*> GetCarriedItems();
+
+	UFUNCTION(BlueprintCallable)
+	//void GetDropsInPickupRadius(TArray<ADrop*>& OutDrops);
+	TArray<ADrop*> GetDropsInPickupRadius();
 
 protected:
 	// Called when the game starts or when spawned
@@ -125,4 +135,10 @@ protected:
 	FVector ExternalVelocity;
 
 	TArray<ADrop*> DropsInPickupRadius;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UItem*> CarriedItems;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UGear*> EquippedGear;
 };

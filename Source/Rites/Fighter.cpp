@@ -105,6 +105,16 @@ void AFighter::EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, 
 	}
 }
 
+TArray<UItem*> AFighter::GetCarriedItems()
+{
+	return CarriedItems;
+}
+
+TArray<ADrop*> AFighter::GetDropsInPickupRadius()
+{
+	return DropsInPickupRadius;
+}
+
 // Called every frame
 void AFighter::Tick(float DeltaTime)
 {

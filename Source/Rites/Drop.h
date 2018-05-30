@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ItemData.h"
 #include "Drop.generated.h"
 
 class UParticleSystemComponent;
@@ -18,11 +19,20 @@ public:
 	// Sets default values for this actor's properties
 	ADrop();
 
-	UItem* CreateItem() const;
+	void SetItemData(FItemData Data);
+
+	UFUNCTION(BlueprintCallable)
+	UItem* GetItem();
 
 protected:
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UItem* CreateItem(FItemData Data) const;
+
+	UFUNCTION()
+	void OnRep_ItemData();
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
@@ -33,4 +43,12 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UItem> ItemClass;
 
+	UPROPERTY(VisibleAnywhere)
+	UItem* Item;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ItemData)
+	FItemData ItemData;
+
+	UPROPERTY(EditAnywhere)
+	bool CreateNewItemOnBeginPlay;
 };

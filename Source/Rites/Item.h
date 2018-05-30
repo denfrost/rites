@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/Texture.h"
+#include "ItemData.h"
 #include "Item.generated.h"
 
 class ADrop;
 
-UCLASS()
+UCLASS(Blueprintable)
 class RITES_API UItem : public UObject
 {
 	GENERATED_BODY()
@@ -18,7 +19,21 @@ public:
 
 	UItem();
 
+	static UItem* CreateNewItem(TSubclassOf<UItem> ItemClass);
+
 	ADrop* SpawnDrop(FVector Location) const;
+
+	UFUNCTION(BlueprintCallable)
+	UTexture2D* GetTexture();
+
+	UFUNCTION(BlueprintCallable)
+	FString& GetName();
+
+	UFUNCTION(BlueprintCallable)
+	FItemData GetItemData();
+
+	UFUNCTION(BlueprintCallable)
+	void SetItemData(FItemData Data);
 
 protected:
 
@@ -29,9 +44,20 @@ protected:
 	UTexture2D* InterfaceTexture;
 
 	UPROPERTY(EditAnywhere)
+	FString Name;
+
+	UPROPERTY(VisibleAnywhere)
+	int32 InstanceID;
+
+	UPROPERTY(EditAnywhere)
 	int32 StackSize;
 
 	UPROPERTY(EditAnywhere)
 	int32 Count;
+
+	UPROPERTY(EditAnywhere)
+	int32 Durability;
+
+	static int32 LastInstanceID;
 	
 };
