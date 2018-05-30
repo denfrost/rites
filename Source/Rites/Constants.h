@@ -13,4 +13,5 @@ namespace Constants
 
 	extern float FighterBackupSpeedMultiplier;
 	extern float FighterAirControlSpeedMultiplier;
+	extern int32 FighterMaxCarriedItems;
 }

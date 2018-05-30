@@ -12,6 +12,7 @@
 
 #include "FighterStats.h"
 #include "InputState.h"
+#include "ItemData.h"
 
 #include "Fighter.generated.h"
 
@@ -20,6 +21,7 @@ class UFighterMovementComponent;
 class ADrop;
 class UItem;
 class UGear;
+struct FItemData;
 
 UCLASS()
 class RITES_API AFighter : public APawn
@@ -44,12 +46,16 @@ public:
 	void EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UFUNCTION(BlueprintCallable)
-	//void GetCarriedItems(TArray<UItem*>& OutItems);
 	TArray<UItem*> GetCarriedItems();
 
 	UFUNCTION(BlueprintCallable)
-	//void GetDropsInPickupRadius(TArray<ADrop*>& OutDrops);
 	TArray<ADrop*> GetDropsInPickupRadius();
+
+	UFUNCTION(BlueprintCallable)
+	void PickupItem(int32 ItemInstanceID);
+
+	UFUNCTION(BlueprintCallable)
+	void DropItem(int32 ItemInstanceID);
 
 protected:
 	// Called when the game starts or when spawned
@@ -76,11 +82,23 @@ protected:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void S_SyncTransform(FVector location, FRotator rotation);
 
-	UFUNCTION(Server, Reliable, WithValidation)
+	UFUNCTION(Server, Unreliable, WithValidation)
 	void S_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void M_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_PickupItem(int32 ItemInstanceID);
+
+	UFUNCTION(Client, Reliable)
+	void C_AddItem(FItemData ItemData);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_DropItem(int32 ItemInstanceID);
+
+	UFUNCTION(Client, Reliable)
+	void C_RemoveItem(int32 ItemInstanceID);
 
 // Components
 

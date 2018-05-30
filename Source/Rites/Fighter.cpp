@@ -7,6 +7,7 @@
 #include "Utilities.h"
 #include "Constants.h"
 #include "Drop.h"
+#include "Item.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
@@ -113,6 +114,17 @@ TArray<UItem*> AFighter::GetCarriedItems()
 TArray<ADrop*> AFighter::GetDropsInPickupRadius()
 {
 	return DropsInPickupRadius;
+}
+
+void AFighter::PickupItem(int32 ItemInstanceID)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Purple, TEXT("Pickup!"));
+	S_PickupItem(ItemInstanceID);
+}
+
+void AFighter::DropItem(int32 ItemInstanceID)
+{
+	S_DropItem(ItemInstanceID);
 }
 
 // Called every frame
@@ -319,5 +331,92 @@ void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector 
 		this->bGrounded = bGrounded;
 		this->MovementVelocity = Velocity;
 		this->InputDirection = InputDirection;
+	}
+}
+
+void AFighter::S_PickupItem_Implementation(int32 ItemInstanceID)
+{
+	ensure(HasAuthority());
+
+	if (CarriedItems.Num() < Constants::FighterMaxCarriedItems)
+	{
+		for (int32 i = 0; i < DropsInPickupRadius.Num(); ++i)
+		{
+			ensure(DropsInPickupRadius[i] != nullptr);
+
+			if (DropsInPickupRadius[i] != nullptr &&
+				DropsInPickupRadius[i]->GetItem() != nullptr &&
+				DropsInPickupRadius[i]->GetItem()->GetInstanceID() == ItemInstanceID)
+			{
+				UItem* PickedUpItem = DropsInPickupRadius[i]->GetItem();
+				CarriedItems.Add(PickedUpItem);
+				DropsInPickupRadius[i]->Destroy();
+
+				if (!IsLocallyControlled())
+				{
+					C_AddItem(PickedUpItem->GetItemData());
+				}
+				
+				break;
+			}
+		}
+	}
+}
+
+bool AFighter::S_PickupItem_Validate(int32 ItemInstanceID)
+{
+	return true;
+}
+
+void AFighter::C_AddItem_Implementation(FItemData ItemData)
+{
+	ensure(IsLocallyControlled());
+	UItem* NewItem = NewObject<UItem>(GetTransientPackage(), ItemData.ItemClass);
+	NewItem->SetItemData(ItemData);
+	CarriedItems.Add(NewItem);
+}
+
+void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
+{
+	ensure(HasAuthority());
+
+	for (int32 i = 0; i < CarriedItems.Num(); ++i)
+	{
+		ensure(CarriedItems[i] != nullptr);
+
+		if (CarriedItems[i] != nullptr &&
+			CarriedItems[i]->GetInstanceID() == ItemInstanceID)
+		{	
+			FVector SpawnLocation = GetActorLocation();
+			ADrop* SpawnedDrop = Cast<ADrop>(GetWorld()->SpawnActor(CarriedItems[i]->GetDropClass().Get(), &SpawnLocation));
+
+			SpawnedDrop->SetItemData(CarriedItems[i]->GetItemData());
+			CarriedItems.RemoveAt(i);
+
+			if (!IsLocallyControlled())
+			{
+				C_RemoveItem(ItemInstanceID);
+			}
+		}
+	}
+}
+
+bool AFighter::S_DropItem_Validate(int32 ItemInstanceID)
+{
+	return true;
+}
+
+void AFighter::C_RemoveItem_Implementation(int32 ItemInstanceID)
+{
+	ensure(IsLocallyControlled());
+
+	for (int32 i = 0; i < CarriedItems.Num(); ++i)
+	{
+		ensure(CarriedItems[i] != nullptr);
+		if (CarriedItems[i] != nullptr &&
+			CarriedItems[i]->GetInstanceID() == ItemInstanceID)
+		{
+			CarriedItems.RemoveAt(i);
+		}
 	}
 }

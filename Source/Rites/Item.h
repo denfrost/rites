@@ -30,6 +30,12 @@ public:
 	FString& GetName();
 
 	UFUNCTION(BlueprintCallable)
+	int32 GetInstanceID();
+
+	UFUNCTION(BlueprintCallable)
+	TSubclassOf<ADrop> GetDropClass();
+
+	UFUNCTION(BlueprintCallable)
 	FItemData GetItemData();
 
 	UFUNCTION(BlueprintCallable)

@@ -11,4 +11,5 @@ namespace Constants
 
 	float FighterBackupSpeedMultiplier = 0.7f;
 	float FighterAirControlSpeedMultiplier = 0.3f;
+	int32 FighterMaxCarriedItems = 9;
 }

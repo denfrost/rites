@@ -50,6 +50,16 @@ FString& UItem::GetName()
 	return Name;
 }
 
+int32 UItem::GetInstanceID()
+{
+	return InstanceID;
+}
+
+TSubclassOf<ADrop> UItem::GetDropClass()
+{
+	return DropClass;
+}
+
 FItemData UItem::GetItemData()
 {
 	FItemData ReturnData;
