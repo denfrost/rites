@@ -13,6 +13,7 @@
 #include "FighterStats.h"
 #include "InputState.h"
 #include "ItemData.h"
+#include "Enums.h"
 
 #include "Fighter.generated.h"
 
@@ -52,10 +53,19 @@ public:
 	TArray<ADrop*> GetDropsInPickupRadius();
 
 	UFUNCTION(BlueprintCallable)
+	TArray<UGear*> GetEquippedGear();
+
+	UFUNCTION(BlueprintCallable)
+	EGearSlot ConvertIntToGearSlot(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
 	void PickupItem(int32 ItemInstanceID);
 
 	UFUNCTION(BlueprintCallable)
 	void DropItem(int32 ItemInstanceID);
+
+	UFUNCTION(BlueprintCallable)
+	void EquipItem(int32 ItemInstanceID);
 
 protected:
 	// Called when the game starts or when spawned
@@ -76,6 +86,10 @@ protected:
 	void UpdateActivate(float DeltaTime, const FInputState& InputState);
 
 	void UpdateAnimationState();
+
+	EGearSlot GetAvailableSlotForGear(UGear* Gear);
+
+	bool MoveCarriedItemToEquipSlot(int32 ItemInstanceID);
 
 // Network Functions
 
@@ -99,6 +113,12 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void C_RemoveItem(int32 ItemInstanceID);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_EquipItem(int32 ItemInstanceID);
+
+	UFUNCTION(Client, Reliable)
+	void C_EquipItem(int32 ItemInstanceID);
 
 // Components
 

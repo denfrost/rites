@@ -35,7 +35,7 @@ enum class EGemColor : uint8
 };
 
 UENUM(BlueprintType)
-enum class EGearSlotType : uint8
+enum class EGearSlot : uint8
 {
 	Head,
 	Chest,

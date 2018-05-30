@@ -8,6 +8,8 @@
 #include "Constants.h"
 #include "Drop.h"
 #include "Item.h"
+#include "Gear.h"
+#include "Gem.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
@@ -49,6 +51,8 @@ AFighter::AFighter()
 
 	PickupSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AFighter::BeginPickupSphereOverlap);
 	PickupSphereComponent->OnComponentEndOverlap.AddDynamic(this, &AFighter::EndBeginPickupSphereOverlap);
+
+	EquippedGear.AddDefaulted(static_cast<int32>(EGearSlot::Count));
 
 	bReplicates = true;
 	bReplicateMovement = true;
@@ -116,6 +120,23 @@ TArray<ADrop*> AFighter::GetDropsInPickupRadius()
 	return DropsInPickupRadius;
 }
 
+TArray<UGear*> AFighter::GetEquippedGear()
+{
+	return EquippedGear;
+}
+
+EGearSlot AFighter::ConvertIntToGearSlot(int32 Index)
+{
+	EGearSlot ReturnSlot = EGearSlot::Count;
+
+	if (Index >= 0 && Index < static_cast<int32>(EGearSlot::Count))
+	{
+		ReturnSlot = static_cast<EGearSlot>(Index);
+	}
+
+	return ReturnSlot;
+}
+
 void AFighter::PickupItem(int32 ItemInstanceID)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Purple, TEXT("Pickup!"));
@@ -125,6 +146,11 @@ void AFighter::PickupItem(int32 ItemInstanceID)
 void AFighter::DropItem(int32 ItemInstanceID)
 {
 	S_DropItem(ItemInstanceID);
+}
+
+void AFighter::EquipItem(int32 ItemInstanceID)
+{
+	S_EquipItem(ItemInstanceID);
 }
 
 // Called every frame
@@ -154,6 +180,9 @@ void AFighter::Tick(float DeltaTime)
 	}
 
 	UpdateAnimationState();
+
+	// Equipped Gear array should never change size.
+	ensure(EquippedGear.Num() == static_cast<int32>(EGearSlot::Count));
 }
 
 void AFighter::Move(FVector Direction)
@@ -297,6 +326,81 @@ void AFighter::UpdateAnimationState()
 	AnimInstance->InputDirection = InputDirection;
 }
 
+EGearSlot AFighter::GetAvailableSlotForGear(UGear* Gear)
+{
+	EGearSlot ReturnSlot = EGearSlot::Count;
+	EGearSlot CandidateSlot = EGearSlot::Count;
+
+	// Equipped Gear array should never change size.
+	ensure(EquippedGear.Num() == static_cast<int32>(EGearSlot::Count));
+
+	if (Gear != nullptr)
+	{
+		EGearType GearType = Gear->GetType();
+
+		switch (GearType)
+		{
+		case EGearType::Head:
+			CandidateSlot = EGearSlot::Head;
+			break;
+		case EGearType::Chest:
+			CandidateSlot = EGearSlot::Chest;
+			break;
+		case EGearType::Legs:
+			CandidateSlot = EGearSlot::Legs;
+			break;
+		case EGearType::Glove:
+			if (EquippedGear[static_cast<int32>(EGearSlot::LeftGlove)] == nullptr)
+				CandidateSlot = EGearSlot::LeftGlove;
+			else
+				CandidateSlot = EGearSlot::RightGlove;
+			break;
+		}
+
+		if (CandidateSlot != EGearSlot::Count &&
+			EquippedGear[static_cast<int32>(CandidateSlot)] == nullptr)
+		{
+			ReturnSlot = CandidateSlot;
+		}
+	}
+
+	return ReturnSlot;
+}
+
+bool AFighter::MoveCarriedItemToEquipSlot(int32 ItemInstanceID)
+{
+	bool bSucessful = false;
+
+	for (int32 i = 0; i < CarriedItems.Num(); ++i)
+	{
+		UGear* Gear = Cast<UGear>(CarriedItems[i]);
+		ensure(CarriedItems[i] != nullptr);
+
+		if (Gear != nullptr)
+		{
+			EGearType GearType = Gear->GetType();
+
+			EGearSlot Slot = GetAvailableSlotForGear(Gear);
+			int32 SlotIndex = static_cast<int32>(Slot);
+
+			if (SlotIndex < static_cast<int32>(EGearSlot::Count) &&
+				EquippedGear[SlotIndex] == nullptr)
+			{
+				EquippedGear[SlotIndex] = Gear;
+				CarriedItems.RemoveAt(i);
+				bSucessful = true;
+				break;
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Orange, TEXT("Gear slot is already taken"));
+			}
+		}
+	}
+
+	return bSucessful;
+}
+
 void AFighter::S_SyncTransform_Implementation(FVector location, FRotator rotation)
 {
 	SetActorLocation(location);
@@ -419,4 +523,30 @@ void AFighter::C_RemoveItem_Implementation(int32 ItemInstanceID)
 			CarriedItems.RemoveAt(i);
 		}
 	}
+}
+
+void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
+{
+	ensure(HasAuthority());
+
+
+	if (MoveCarriedItemToEquipSlot(ItemInstanceID))
+	{
+		if (!IsLocallyControlled())
+		{
+			C_EquipItem(ItemInstanceID);
+		}
+	}
+}
+
+bool AFighter::S_EquipItem_Validate(int32 ItemInstanceID)
+{
+	return true;
+}
+
+void AFighter::C_EquipItem_Implementation(int32 ItemInstanceID)
+{
+	ensure(IsLocallyControlled());
+
+	MoveCarriedItemToEquipSlot(ItemInstanceID);
 }

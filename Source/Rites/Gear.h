@@ -16,6 +16,15 @@ class RITES_API UGear : public UItem
 	
 public:
 
+	UFUNCTION(BlueprintCallable)
+	TArray<FGemSocket>& GetSockets();
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetArmor();
+
+	UFUNCTION(BlueprintCallable)
+	EGearType GetType();
+
 
 protected:
 
@@ -26,5 +35,5 @@ protected:
 	int32 Armor;
 	
 	UPROPERTY(EditAnywhere)
-	EGearSlotType SlotType;
+	EGearType Type;
 };

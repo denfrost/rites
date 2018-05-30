@@ -52,6 +52,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FString Name;
 
+	UPROPERTY(EditAnywhere)
+	FString Description;
+
 	UPROPERTY(VisibleAnywhere)
 	int32 InstanceID;
 
