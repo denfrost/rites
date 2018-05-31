@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Enums.h"
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 #include "RitesGameInstance.generated.h"
 
@@ -25,7 +26,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure, BlueprintCallable)
 	bool IsMenuOpen(const FString& Name);
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	FColor GetColorFromGemColor(EGemColor GemColor);
+
 	UFUNCTION(BlueprintCallable)
 	void ToggleMenu(const FString& Name);
-	
 };
