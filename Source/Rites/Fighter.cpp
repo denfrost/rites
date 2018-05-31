@@ -153,6 +153,21 @@ void AFighter::EquipItem(int32 ItemInstanceID)
 	S_EquipItem(ItemInstanceID);
 }
 
+void AFighter::UnequipItem(int32 ItemInstanceID, EGearSlot GearSlot)
+{
+	S_UnequipItem(ItemInstanceID, GearSlot);
+}
+
+void AFighter::SocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	S_SocketGem(GearInstanceID, GearSlot, GemInstanceID);
+}
+
+void AFighter::UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	S_UnsocketGem(GearInstanceID, GearSlot, GemInstanceID);
+}
+
 // Called every frame
 void AFighter::Tick(float DeltaTime)
 {
@@ -376,7 +391,8 @@ bool AFighter::MoveCarriedItemToEquipSlot(int32 ItemInstanceID)
 		UGear* Gear = Cast<UGear>(CarriedItems[i]);
 		ensure(CarriedItems[i] != nullptr);
 
-		if (Gear != nullptr)
+		if (Gear != nullptr &&
+			Gear->GetInstanceID() == ItemInstanceID)
 		{
 			EGearType GearType = Gear->GetType();
 
@@ -399,6 +415,111 @@ bool AFighter::MoveCarriedItemToEquipSlot(int32 ItemInstanceID)
 	}
 
 	return bSucessful;
+}
+
+bool AFighter::MoveEquippedItemToCarried(int32 ItemInstanceID, EGearSlot GearSlot)
+{
+	bool bSuccessful = false;
+
+	if (GearSlot < EGearSlot::Count &&
+		CarriedItems.Num() < Constants::FighterMaxCarriedItems)
+	{
+		UGear* Gear = EquippedGear[static_cast<int32>(GearSlot)];
+
+		if (Gear != nullptr &&
+			Gear->GetInstanceID() == ItemInstanceID)
+		{
+			CarriedItems.Add(EquippedGear[static_cast<int32>(GearSlot)]);
+			EquippedGear[static_cast<int32>(GearSlot)] = nullptr;
+			bSuccessful = true;
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Red, TEXT("Could not find gear to unequip"));
+		}
+	}
+
+	return bSuccessful;
+}
+
+bool AFighter::MoveCarriedGemToGearSocket(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	bool bSuccessful = false;
+
+	UGem* Gem = nullptr;
+	UGear* Gear = nullptr;
+	int32 GemCarriedIndex = 0;
+
+	// Find Gem first
+	for (int32 i = 0; i < CarriedItems.Num(); ++i)
+	{
+		if (CarriedItems[i] != nullptr &&
+			CarriedItems[i]->GetInstanceID() == GemInstanceID)
+		{
+			UGem* Gem = Cast<UGem>(CarriedItems[i]);
+			GemCarriedIndex = i;
+		}
+	}
+
+	if (GearSlot < EGearSlot::Count)
+	{
+		Gear = EquippedGear[static_cast<int32>(GearSlot)];
+	}
+
+	// Attach if gear is valid and compatible socket is open
+	if (Gem != nullptr &&
+		Gear != nullptr &&
+		Gear->GetInstanceID() == GearInstanceID)
+	{
+		TArray<FGemSocket>& Sockets = Gear->GetSockets();
+
+		for (int32 s = 0; s < Sockets.Num(); ++s)
+		{
+			if (Sockets[s].Gem == nullptr &&
+				Sockets[s].Color == Gem->GetColor())
+			{
+				// Valid socket was found
+				Sockets[s].Gem = Cast<UGem>(Gem);
+				CarriedItems[GemCarriedIndex] = nullptr;
+				bSuccessful = true;
+				break;
+			}
+		}
+	}
+
+	return bSuccessful;
+}
+
+bool AFighter::MoveSocketedGemToCarried(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	bool bSuccessful = false;
+
+	if (GearSlot < EGearSlot::Count &&
+		CarriedItems.Num() < Constants::FighterMaxCarriedItems)
+	{
+		UGear* Gear = EquippedGear[static_cast<int32>(GearSlot)];
+
+		if (Gear != nullptr &&
+			Gear->GetInstanceID() == GearInstanceID)
+		{
+			TArray<FGemSocket>& Sockets = Gear->GetSockets();
+
+			for (int32 s = 0; s < Sockets.Num(); ++s)
+			{
+				if (Sockets[s].Gem != nullptr &&
+					Sockets[s].Gem->GetInstanceID() == GemInstanceID)
+				{
+					// The gem was found, clear it on the gear and add it to carried array
+					CarriedItems.Add(Sockets[s].Gem);
+					Sockets[s].Gem = nullptr;
+					bSuccessful = true;
+					break;
+				}
+			}
+		}
+	}
+
+	return bSuccessful;
 }
 
 void AFighter::S_SyncTransform_Implementation(FVector location, FRotator rotation)
@@ -494,7 +615,7 @@ void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
 			FVector SpawnLocation = GetActorLocation();
 			ADrop* SpawnedDrop = Cast<ADrop>(GetWorld()->SpawnActor(CarriedItems[i]->GetDropClass().Get(), &SpawnLocation));
 
-			SpawnedDrop->SetItemData(CarriedItems[i]->GetItemData());
+			SpawnedDrop->TransferItemToDrop(CarriedItems[i]);
 			CarriedItems.RemoveAt(i);
 
 			if (!IsLocallyControlled())
@@ -529,12 +650,15 @@ void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
 {
 	ensure(HasAuthority());
 
-
 	if (MoveCarriedItemToEquipSlot(ItemInstanceID))
 	{
 		if (!IsLocallyControlled())
 		{
 			C_EquipItem(ItemInstanceID);
+		}
+		else
+		{
+			// Dirty Inventory UI
 		}
 	}
 }
@@ -549,4 +673,91 @@ void AFighter::C_EquipItem_Implementation(int32 ItemInstanceID)
 	ensure(IsLocallyControlled());
 
 	MoveCarriedItemToEquipSlot(ItemInstanceID);
+}
+
+void AFighter::S_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot GearSlot)
+{
+	ensure(HasAuthority());
+
+	if (MoveEquippedItemToCarried(ItemInstanceID, GearSlot))
+	{
+		if (!IsLocallyControlled())
+		{
+			C_UnequipItem(ItemInstanceID, GearSlot);
+		}
+		else
+		{
+			// Dirty UI
+		}
+	}
+}
+
+bool AFighter::S_UnequipItem_Validate(int32 ItemInstanceID, EGearSlot GearSlot)
+{
+	return true;
+}
+
+void AFighter::C_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot GearSlot)
+{
+	ensure(IsLocallyControlled());
+
+	MoveEquippedItemToCarried(ItemInstanceID, GearSlot);
+}
+
+void AFighter::S_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	ensure(HasAuthority());
+
+	if (MoveCarriedGemToGearSocket(GearInstanceID, GearSlot, GemInstanceID))
+	{
+		if (!IsLocallyControlled())
+		{
+			C_SocketGem(GearInstanceID, GearSlot, GemInstanceID);
+		}
+		else
+		{
+			// Dirty UI
+		}
+	}
+}
+
+bool AFighter::S_SocketGem_Validate(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	return true;
+}
+
+void AFighter::C_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	ensure(IsLocallyControlled());
+
+	MoveCarriedGemToGearSocket(GearInstanceID, GearSlot, GemInstanceID);
+}
+
+void AFighter::S_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	ensure(HasAuthority());
+
+	if (MoveSocketedGemToCarried(GearInstanceID, GearSlot, GemInstanceID))
+	{
+		if (!IsLocallyControlled())
+		{
+			C_UnsocketGem(GearInstanceID, GearSlot, GemInstanceID);
+		}
+		else
+		{
+			// Dirty UI
+		}
+	}
+}
+
+bool AFighter::S_UnsocketGem_Validate(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	return true;
+}
+
+void AFighter::C_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
+{
+	ensure(IsLocallyControlled());
+
+	MoveSocketedGemToCarried(GearInstanceID, GearSlot, GemInstanceID);
 }

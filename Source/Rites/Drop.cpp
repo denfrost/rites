@@ -2,6 +2,8 @@
 
 #include "Drop.h"
 #include "Item.h"
+#include "Gear.h"
+#include "Gem.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -30,15 +32,39 @@ ADrop::ADrop()
 	bReplicates = true;
 }
 
-void ADrop::SetItemData(FItemData Data)
+void ADrop::TransferItemToDrop(UItem* NewItem)
 {
 	ensure(HasAuthority());
-	ensure(Data.ItemClass == ItemClass);
 
 	if (HasAuthority())
 	{
-		ItemData = Data;
-		Item = CreateItem(Data);
+		Item = NewItem;
+
+		// Clear and Rewrite DropData (for replication)
+		DropData = FDropData();
+
+		if (Item != nullptr)
+		{
+			DropData.BaseItemData = NewItem->GetItemData();
+
+			UGear* Gear = Cast<UGear>(Item);
+
+			if (Gear != nullptr)
+			{
+				// Write data for socketed gem 1 
+				if (Gear->GetSockets().Num() >= 1 &&
+					Gear->GetSockets()[0].Gem != nullptr)
+				{
+					DropData.Gem0ItemData = Gear->GetSockets()[0].Gem->GetItemData();
+				}
+
+				if (Gear->GetSockets().Num() >= 2 &&
+					Gear->GetSockets()[1].Gem != nullptr)
+				{
+					DropData.Gem1ItemData = Gear->GetSockets()[1].Gem->GetItemData();
+				}
+			}
+		}
 	}
 }
 
@@ -49,8 +75,7 @@ UItem* ADrop::GetItem()
 
 UItem* ADrop::CreateItem(FItemData Data) const
 {
-	ensure(Data.ItemClass == ItemClass);
-	UItem* ReturnItem = NewObject<UItem>(GetTransientPackage(), ItemClass);
+	UItem* ReturnItem = NewObject<UItem>(GetTransientPackage(), Data.ItemClass);
 
 	ensure(ReturnItem != nullptr);
 
@@ -66,11 +91,36 @@ UItem* ADrop::CreateItem(FItemData Data) const
 	return ReturnItem;
 }
 
+void ADrop::CreateAndSocketGem(FItemData GemData, int32 SocketIndex)
+{
+	UGear* Gear = Cast<UGear>(Item);
+
+	// Only create and socket gem if this base item is a gear and 
+	// the gem data has a valid item.
+	if (Gear != nullptr &&
+		GemData.ItemClass != nullptr &&
+		GemData.InstanceID != 0)
+	{
+		// Instantiate and socket Gem 1.
+		ensure(Gear->GetSockets().Num() >= SocketIndex + 1);
+
+		if (Gear->GetSockets().Num() >= SocketIndex + 1)
+		{
+			Gear->GetSockets()[SocketIndex].Gem = Cast<UGem>(CreateItem(GemData));
+			ensure(Gear->GetSockets()[SocketIndex].Gem != nullptr);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Yellow, TEXT("Drop could not attach Gem to Gear because it is missing a socket."));
+		}
+	}
+}
+
 void ADrop::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ADrop, ItemData);
+	DOREPLIFETIME(ADrop, DropData);
 }
 
 // Called when the game starts or when spawned
@@ -78,12 +128,10 @@ void ADrop::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ensure(ItemClass.Get() != nullptr);
-
 	if (CreateNewItemOnBeginPlay && HasAuthority())
 	{	
-		Item = UItem::CreateNewItem(ItemClass);
-		ItemData = Item->GetItemData();
+		Item = UItem::CreateNewItem(SpawnItemClass);
+		DropData.BaseItemData = Item->GetItemData();
 	}
 
 	// Start particle system
@@ -101,8 +149,16 @@ void ADrop::BeginPlay()
 	}
 }
 
-void ADrop::OnRep_ItemData()
+void ADrop::OnRep_DropData()
 {
 	ensure(!HasAuthority());
-	Item = CreateItem(ItemData);
+
+	Item = CreateItem(DropData.BaseItemData);
+	ensure(Item != nullptr);
+
+	if (Item != nullptr)
+	{
+		CreateAndSocketGem(DropData.Gem0ItemData, 0);
+		CreateAndSocketGem(DropData.Gem1ItemData, 1);
+	}
 }

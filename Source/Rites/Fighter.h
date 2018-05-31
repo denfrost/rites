@@ -67,6 +67,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EquipItem(int32 ItemInstanceID);
 
+	UFUNCTION(BlueprintCallable)
+	void UnequipItem(int32 ItemInstanceID, EGearSlot GearSlot);
+
+	UFUNCTION(BlueprintCallable)
+	void SocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	UFUNCTION(BlueprintCallable)
+	void UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -90,6 +99,12 @@ protected:
 	EGearSlot GetAvailableSlotForGear(UGear* Gear);
 
 	bool MoveCarriedItemToEquipSlot(int32 ItemInstanceID);
+
+	bool MoveEquippedItemToCarried(int32 ItemInstanceID, EGearSlot GearSlot);
+
+	bool MoveCarriedGemToGearSocket(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	bool MoveSocketedGemToCarried(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
 // Network Functions
 
@@ -119,6 +134,24 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void C_EquipItem(int32 ItemInstanceID);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_UnequipItem(int32 ItemInstanceID, EGearSlot GearSlot);
+
+	UFUNCTION(Client, Reliable)
+	void C_UnequipItem(int32 ItemInstanceID, EGearSlot GearSlot);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_SocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	UFUNCTION(Client, Reliable)
+	void C_SocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	UFUNCTION(Client, Reliable)
+	void C_UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
 // Components
 

@@ -17,6 +17,21 @@ class RITES_API UGem : public UItem
 	
 public:
 
+	UFUNCTION(BlueprintCallable)
+	EGemColor GetColor() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetCooldownTime() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetCooldownRemaining() const;
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetMaxChargers() const;
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetCharges() const;
+
 	UFUNCTION(BlueprintNativeEvent)
 	void Activate(AFighter* Fighter);
 

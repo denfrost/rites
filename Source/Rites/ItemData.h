@@ -21,8 +21,8 @@ public:
 	int32 InstanceID;
 
 	UPROPERTY(EditAnywhere)
-	int32 Count;
+	int16 Count;
 
 	UPROPERTY(EditAnywhere)
-	int32 Durability;
+	int16 Durability;
 };

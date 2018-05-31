@@ -15,14 +15,17 @@ struct FGemSocket
 
 public:
 
-	FGemSocket()
-	{
-		Color = EGemColor::Red;
-	}
+	//FGemSocket()
+	//{
+	//	Color = EGemColor::Red;
+	//}
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGemColor Color;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UGem* Gem;
+
+	//UPROPERTY(EditAnywhere)
+	//int32 TestProp;
 };

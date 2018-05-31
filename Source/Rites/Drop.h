@@ -10,6 +10,23 @@
 class UParticleSystemComponent;
 class UItem;
 
+USTRUCT(BlueprintType)
+struct FDropData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere)
+	FItemData BaseItemData;
+
+	UPROPERTY(EditAnywhere)
+	FItemData Gem0ItemData;
+
+	UPROPERTY(EditAnywhere)
+	FItemData Gem1ItemData;
+};
+
 UCLASS()
 class RITES_API ADrop : public AActor
 {
@@ -19,7 +36,7 @@ public:
 	// Sets default values for this actor's properties
 	ADrop();
 
-	void SetItemData(FItemData Data);
+	void TransferItemToDrop(UItem* NewItem);
 
 	UFUNCTION(BlueprintCallable)
 	UItem* GetItem();
@@ -31,8 +48,10 @@ protected:
 
 	UItem* CreateItem(FItemData Data) const;
 
+	void CreateAndSocketGem(FItemData GemData, int32 SocketIndex);
+
 	UFUNCTION()
-	void OnRep_ItemData();
+	void OnRep_DropData();
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
@@ -41,13 +60,13 @@ protected:
 	UParticleSystemComponent* ParticleComponent;
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<UItem> ItemClass;
+	TSubclassOf<UItem> SpawnItemClass;
 
 	UPROPERTY(VisibleAnywhere)
 	UItem* Item;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ItemData)
-	FItemData ItemData;
+	UPROPERTY(ReplicatedUsing = OnRep_DropData)
+	FDropData DropData;
 
 	UPROPERTY(EditAnywhere)
 	bool CreateNewItemOnBeginPlay;
