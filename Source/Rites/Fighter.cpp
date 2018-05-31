@@ -456,7 +456,7 @@ bool AFighter::MoveCarriedGemToGearSocket(int32 GearInstanceID, EGearSlot GearSl
 		if (CarriedItems[i] != nullptr &&
 			CarriedItems[i]->GetInstanceID() == GemInstanceID)
 		{
-			UGem* Gem = Cast<UGem>(CarriedItems[i]);
+			Gem = Cast<UGem>(CarriedItems[i]);
 			GemCarriedIndex = i;
 		}
 	}
@@ -480,7 +480,7 @@ bool AFighter::MoveCarriedGemToGearSocket(int32 GearInstanceID, EGearSlot GearSl
 			{
 				// Valid socket was found
 				Sockets[s].Gem = Cast<UGem>(Gem);
-				CarriedItems[GemCarriedIndex] = nullptr;
+				CarriedItems.RemoveAt(GemCarriedIndex);
 				bSuccessful = true;
 				break;
 			}
