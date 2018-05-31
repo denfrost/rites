@@ -5,7 +5,7 @@
 
 FItemData::FItemData()
 {
-	//ItemClass = UItem::StaticClass();
+	ItemClass = nullptr;
 	InstanceID = 0;
 	Count = 1;
 	Durability = 100;

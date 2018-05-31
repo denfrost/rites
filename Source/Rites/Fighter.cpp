@@ -579,7 +579,30 @@ void AFighter::S_PickupItem_Implementation(int32 ItemInstanceID)
 
 				if (!IsLocallyControlled())
 				{
-					C_AddItem(PickedUpItem->GetItemData());
+					UGear* Gear = Cast<UGear>(PickedUpItem);
+
+					if (Gear != nullptr)
+					{
+						if (Gear->GetSockets().Num() == 1)
+						{
+							FItemData Gem0Data = Gear->GetSockets()[0].Gem != nullptr ? Gear->GetSockets()[0].Gem->GetItemData() : FItemData();
+							C_AddItem_1Socket(Gear->GetItemData(), Gem0Data);
+						}
+						else if (Gear->GetSockets().Num() == 2)
+						{
+							FItemData Gem0Data = Gear->GetSockets()[0].Gem != nullptr ? Gear->GetSockets()[0].Gem->GetItemData() : FItemData();
+							FItemData Gem1Data = Gear->GetSockets()[1].Gem != nullptr ? Gear->GetSockets()[1].Gem->GetItemData() : FItemData();
+							C_AddItem_2Socket(Gear->GetItemData(), Gem0Data, Gem1Data);
+						}
+						else
+						{
+							C_AddItem(Gear->GetItemData());
+						}
+					}
+					else
+					{
+						C_AddItem(PickedUpItem->GetItemData());
+					}
 				}
 				else
 				{
@@ -602,6 +625,58 @@ void AFighter::C_AddItem_Implementation(FItemData ItemData)
 	ensure(IsLocallyControlled());
 	UItem* NewItem = NewObject<UItem>(GetTransientPackage(), ItemData.ItemClass);
 	NewItem->SetItemData(ItemData);
+	CarriedItems.Add(NewItem);
+
+	RefreshInventoryMenu();
+}
+
+void AFighter::C_AddItem_1Socket_Implementation(FItemData BaseItemData, FItemData SocketedGem0Data)
+{
+	ensure(IsLocallyControlled());
+
+	UItem* NewItem = NewObject<UItem>(GetTransientPackage(), BaseItemData.ItemClass);
+	NewItem->SetItemData(BaseItemData);
+
+	UGear* Gear = Cast<UGear>(NewItem);
+
+	ensure(Gear != nullptr);
+	ensure(Gear->GetSockets().Num() >= 1);
+
+	if (Gear != nullptr &&
+		Gear->GetSockets().Num() >= 1)
+	{
+		Gear->GetSockets()[0].Gem = SocketedGem0Data.InstanceID != 0 ? NewObject<UGem>(GetTransientPackage(), SocketedGem0Data.ItemClass) : nullptr;
+		
+		if (Gear->GetSockets()[0].Gem != nullptr) Gear->GetSockets()[0].Gem->SetItemData(SocketedGem0Data);
+	}
+
+	CarriedItems.Add(NewItem);
+
+	RefreshInventoryMenu();
+}
+
+void AFighter::C_AddItem_2Socket_Implementation(FItemData BaseItemData, FItemData SocketedGem0Data, FItemData SocketedGem1Data)
+{
+	ensure(IsLocallyControlled());
+
+	UItem* NewItem = NewObject<UItem>(GetTransientPackage(), BaseItemData.ItemClass);
+	NewItem->SetItemData(BaseItemData);
+
+	UGear* Gear = Cast<UGear>(NewItem);
+
+	ensure(Gear != nullptr);
+	ensure(Gear->GetSockets().Num() >= 2);
+
+	if (Gear != nullptr &&
+		Gear->GetSockets().Num() >= 2)
+	{
+		Gear->GetSockets()[0].Gem = SocketedGem0Data.InstanceID != 0 ? NewObject<UGem>(GetTransientPackage(), SocketedGem0Data.ItemClass) : nullptr;
+		Gear->GetSockets()[1].Gem = SocketedGem1Data.InstanceID != 0 ? NewObject<UGem>(GetTransientPackage(), SocketedGem1Data.ItemClass) : nullptr;
+
+		if (Gear->GetSockets()[0].Gem != nullptr) Gear->GetSockets()[0].Gem->SetItemData(SocketedGem0Data);
+		if (Gear->GetSockets()[1].Gem != nullptr) Gear->GetSockets()[1].Gem->SetItemData(SocketedGem1Data);
+	}
+
 	CarriedItems.Add(NewItem);
 
 	RefreshInventoryMenu();

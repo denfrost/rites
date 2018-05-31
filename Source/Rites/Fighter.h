@@ -128,6 +128,12 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void C_AddItem(FItemData ItemData);
 
+	UFUNCTION(Client, Reliable)
+	void C_AddItem_1Socket(FItemData BaseItemData, FItemData SocketedGem0Data);
+	
+	UFUNCTION(Client, Reliable)
+	void C_AddItem_2Socket(FItemData BaseItemData, FItemData SocketedGem0Data, FItemData SocketedGem1Data);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void S_DropItem(int32 ItemInstanceID);
 
