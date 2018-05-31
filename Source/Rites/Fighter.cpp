@@ -581,6 +581,10 @@ void AFighter::S_PickupItem_Implementation(int32 ItemInstanceID)
 				{
 					C_AddItem(PickedUpItem->GetItemData());
 				}
+				else
+				{
+					RefreshInventoryMenu();
+				}
 				
 				break;
 			}
@@ -599,6 +603,8 @@ void AFighter::C_AddItem_Implementation(FItemData ItemData)
 	UItem* NewItem = NewObject<UItem>(GetTransientPackage(), ItemData.ItemClass);
 	NewItem->SetItemData(ItemData);
 	CarriedItems.Add(NewItem);
+
+	RefreshInventoryMenu();
 }
 
 void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
@@ -622,6 +628,10 @@ void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
 			{
 				C_RemoveItem(ItemInstanceID);
 			}
+			else
+			{
+				RefreshInventoryMenu();
+			}
 		}
 	}
 }
@@ -644,6 +654,8 @@ void AFighter::C_RemoveItem_Implementation(int32 ItemInstanceID)
 			CarriedItems.RemoveAt(i);
 		}
 	}
+
+	RefreshInventoryMenu();
 }
 
 void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
@@ -658,7 +670,7 @@ void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
 		}
 		else
 		{
-			// Dirty Inventory UI
+			RefreshInventoryMenu();
 		}
 	}
 }
@@ -673,6 +685,7 @@ void AFighter::C_EquipItem_Implementation(int32 ItemInstanceID)
 	ensure(IsLocallyControlled());
 
 	MoveCarriedItemToEquipSlot(ItemInstanceID);
+	RefreshInventoryMenu();
 }
 
 void AFighter::S_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot GearSlot)
@@ -687,7 +700,7 @@ void AFighter::S_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot Gear
 		}
 		else
 		{
-			// Dirty UI
+			RefreshInventoryMenu();
 		}
 	}
 }
@@ -702,6 +715,7 @@ void AFighter::C_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot Gear
 	ensure(IsLocallyControlled());
 
 	MoveEquippedItemToCarried(ItemInstanceID, GearSlot);
+	RefreshInventoryMenu();
 }
 
 void AFighter::S_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
@@ -716,7 +730,7 @@ void AFighter::S_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSl
 		}
 		else
 		{
-			// Dirty UI
+			RefreshInventoryMenu();
 		}
 	}
 }
@@ -731,6 +745,7 @@ void AFighter::C_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSl
 	ensure(IsLocallyControlled());
 
 	MoveCarriedGemToGearSocket(GearInstanceID, GearSlot, GemInstanceID);
+	RefreshInventoryMenu();
 }
 
 void AFighter::S_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
@@ -745,7 +760,7 @@ void AFighter::S_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot Gear
 		}
 		else
 		{
-			// Dirty UI
+			RefreshInventoryMenu();
 		}
 	}
 }
@@ -760,4 +775,5 @@ void AFighter::C_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot Gear
 	ensure(IsLocallyControlled());
 
 	MoveSocketedGemToCarried(GearInstanceID, GearSlot, GemInstanceID);
+	RefreshInventoryMenu();
 }

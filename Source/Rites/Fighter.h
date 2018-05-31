@@ -106,6 +106,11 @@ protected:
 
 	bool MoveSocketedGemToCarried(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
+// Blueprint Implementable Events
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void RefreshInventoryMenu();
+
 // Network Functions
 
 	UFUNCTION(Server, Reliable, WithValidation)
