@@ -141,7 +141,7 @@ void ADrop::BeginPlay()
 	
 	// Attempt to move drop down until it hits a world static object.
 	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), GetActorLocation() - DropCastDistance * FVector::UpVector, ECC_WorldStatic /*, ECC_WorldStatic*/);
+	GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), GetActorLocation() - DropCastDistance * FVector::UpVector, ECC_GameTraceChannel1 /*, ECC_WorldStatic*/);
 
 	if (HitResult.bBlockingHit)
 	{
