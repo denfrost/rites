@@ -56,6 +56,7 @@ AFighter::AFighter()
 
 	bReplicates = true;
 	bReplicateMovement = true;
+	NetUpdateFrequency = 60.0f;
 }
 
 // Called when the game starts or when spawned
@@ -79,6 +80,7 @@ void AFighter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFighter, Stats);
+	DOREPLIFETIME(AFighter, ActiveAbilities);
 }
 
 
@@ -137,6 +139,16 @@ EGearSlot AFighter::ConvertIntToGearSlot(int32 Index)
 	return ReturnSlot;
 }
 
+float AFighter::GetGlobalCooldownRemainin() const
+{
+	return GlobalCooldownRemaining;
+}
+
+bool AFighter::IsOnGlobalCooldown() const
+{
+	return GlobalCooldownRemaining > 0.0f;
+}
+
 void AFighter::PickupItem(int32 ItemInstanceID)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Purple, TEXT("Pickup!"));
@@ -186,7 +198,9 @@ void AFighter::Tick(float DeltaTime)
 		UpdateOrientation(DeltaTime, InputState);
 		UpdateCasting(DeltaTime, InputState);
 		UpdateRecharge(DeltaTime, InputState);
-		UpdateActivate(DeltaTime, InputState);
+		UpdateInteract(DeltaTime, InputState);
+		UpdateGlobalCooldown(DeltaTime);
+		UpdateGems(DeltaTime);
 
 		S_SyncTransform(GetActorLocation(), GetActorRotation());
 		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
@@ -203,6 +217,26 @@ void AFighter::Tick(float DeltaTime)
 void AFighter::Move(FVector Direction)
 {
 	Direction;
+}
+
+void AFighter::SetGlobalCooldown(float CooldownTime)
+{
+	GlobalCooldownRemaining = CooldownTime;
+}
+
+void AFighter::SetLastActivatedGem(UGem* Gem)
+{
+	LastActivatedGem = Gem;
+}
+
+void AFighter::AddActiveAbility(AAbility* Ability)
+{
+	ActiveAbilities.Add(Ability);
+}
+
+void AFighter::RemoveActiveAbility(AAbility* Ability)
+{
+	ActiveAbilities.Remove(Ability);
 }
 
 void AFighter::UpdateJump(float DeltaTime, const FInputState& InputState)
@@ -320,7 +354,10 @@ void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
 
 void AFighter::UpdateCasting(float DeltaTime, const FInputState& InputState)
 {
-
+	UpdateGemActivation(EGearSlot::LeftGlove, 0, InputState.bCastLeftDown, PreviousInputState.bCastLeftDown, DeltaTime);
+	UpdateGemActivation(EGearSlot::LeftGlove, 1, InputState.bCastLeftSecondaryDown, PreviousInputState.bCastLeftSecondaryDown, DeltaTime);
+	UpdateGemActivation(EGearSlot::RightGlove, 0, InputState.bCastRightDown, PreviousInputState.bCastRightDown, DeltaTime);
+	UpdateGemActivation(EGearSlot::RightGlove, 1, InputState.bCastRightSecondaryDown, PreviousInputState.bCastRightSecondaryDown, DeltaTime);
 }
 
 void AFighter::UpdateRecharge(float DeltaTime, const FInputState& InputState)
@@ -328,9 +365,34 @@ void AFighter::UpdateRecharge(float DeltaTime, const FInputState& InputState)
 
 }
 
-void AFighter::UpdateActivate(float DeltaTime, const FInputState& InputState)
+void AFighter::UpdateInteract(float DeltaTime, const FInputState& InputState)
 {
 
+}
+
+
+void AFighter::UpdateGlobalCooldown(float DeltaTime)
+{
+	GlobalCooldownRemaining -= DeltaTime;
+}
+
+void AFighter::UpdateGems(float DeltaTime)
+{
+	for (int32 i = 0; i < EquippedGear.Num(); ++i)
+	{
+		if (EquippedGear[i] != nullptr)
+		{
+			TArray<FGemSocket>& Sockets = EquippedGear[i]->GetSockets();
+
+			for (int32 s = 0; s < Sockets.Num(); ++s)
+			{
+				if (Sockets[s].Gem != nullptr)
+				{
+					Sockets[s].Gem->Tick(this, DeltaTime);
+				}
+			}
+		}
+	}
 }
 
 void AFighter::UpdateAnimationState()
@@ -339,6 +401,30 @@ void AFighter::UpdateAnimationState()
 	AnimInstance->bGrounded = bGrounded;
 	AnimInstance->Velocity = MovementVelocity;
 	AnimInstance->InputDirection = InputDirection;
+}
+
+void AFighter::UpdateGemActivation(EGearSlot GearSlot, int32 SocketIndex, bool ButtonDown, bool PreviousButtonDown, float DeltaTime)
+{
+	UGem* Gem = GetEquippedGem(GearSlot, SocketIndex);
+
+	if (Gem != nullptr)
+	{
+		// We found a gem. Now call the appropriate function (Active / Release / Tick) based on pressed buttons.
+		if (ButtonDown && !PreviousButtonDown &&
+			(!IsOnGlobalCooldown() || LastActivatedGem == Gem) &&
+			!Gem->IsOnCooldown() &&
+			(Gem->GetMaxChargers() == 0 || Gem->GetCharges() > 0))
+		{
+			// Activate the gem if 
+			S_ActivateGem(GearSlot, SocketIndex);
+		}
+		else if (!ButtonDown &&
+				Gem->IsCurrentlyBeingChanneled())
+		{
+			// "Release()" is called on channeled gems once the user lets go of the casting button
+			S_ReleaseGem(GearSlot, SocketIndex);
+		}
+	}
 }
 
 EGearSlot AFighter::GetAvailableSlotForGear(UGear* Gear)
@@ -520,6 +606,24 @@ bool AFighter::MoveSocketedGemToCarried(int32 GearInstanceID, EGearSlot GearSlot
 	}
 
 	return bSuccessful;
+}
+
+UGem* AFighter::GetEquippedGem(EGearSlot GearSlot, int32 SocketIndex)
+{
+	UGem* Gem = nullptr;
+	UGear* Gear = EquippedGear[static_cast<int32>(GearSlot)];
+
+	if (Gear != nullptr)
+	{	
+		TArray<FGemSocket>& Sockets = Gear->GetSockets();
+
+		if (SocketIndex < Sockets.Num())
+		{
+			Gem = Sockets[SocketIndex].Gem;
+		}
+	}
+
+	return Gem;
 }
 
 void AFighter::S_SyncTransform_Implementation(FVector location, FRotator rotation)
@@ -851,4 +955,76 @@ void AFighter::C_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot Gear
 
 	MoveSocketedGemToCarried(GearInstanceID, GearSlot, GemInstanceID);
 	RefreshInventoryMenu();
+}
+
+void AFighter::S_ActivateGem_Implementation(EGearSlot GearSlot, int32 SocketIndex)
+{
+	ensure(HasAuthority());
+
+	UGem* Gem = GetEquippedGem(GearSlot, SocketIndex);
+
+	if (Gem != nullptr &&
+		(!IsOnGlobalCooldown() || LastActivatedGem == Gem) &&
+		!Gem->IsOnCooldown() &&
+		(Gem->GetMaxChargers() == 0 || Gem->GetCharges() > 0))
+	{
+		Gem->Activate(this);
+
+		if (!IsLocallyControlled())
+		{
+			C_ActivateGem(GearSlot, SocketIndex);
+		}
+	}
+}
+
+bool AFighter::S_ActivateGem_Validate(EGearSlot GearSlot, int32 SocketIndex)
+{
+	return true;
+}
+
+void AFighter::C_ActivateGem_Implementation(EGearSlot GearSlot, int32 SocketIndex)
+{
+	ensure(IsLocallyControlled());
+	UGem* Gem = GetEquippedGem(GearSlot, SocketIndex);
+
+	ensure(Gem != nullptr);
+	if (Gem != nullptr)
+	{
+		Gem->RegisterActivate(this);
+	}
+}
+
+void AFighter::S_ReleaseGem_Implementation(EGearSlot GearSlot, int32 SocketIndex)
+{
+	ensure(HasAuthority());
+	UGem* Gem = GetEquippedGem(GearSlot, SocketIndex);
+
+	if (Gem != nullptr &&
+		Gem->IsCurrentlyBeingChanneled())
+	{
+		Gem->Release(this);
+
+		if (!IsLocallyControlled())
+		{
+			C_ReleaseGem(GearSlot, SocketIndex);
+		}
+	}
+}
+
+bool AFighter::S_ReleaseGem_Validate(EGearSlot GearSlot, int32 SocketIndex)
+{
+	return true;
+}
+
+void AFighter::C_ReleaseGem_Implementation(EGearSlot GearSlot, int32 SocketIndex)
+{
+	ensure(IsLocallyControlled());
+
+	UGem* Gem = GetEquippedGem(GearSlot, SocketIndex);
+
+	ensure(Gem != nullptr);
+	if (Gem != nullptr)
+	{
+		Gem->RegisterRelease(this);
+	}
 }

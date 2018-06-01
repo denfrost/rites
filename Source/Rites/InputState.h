@@ -28,6 +28,12 @@ public:
 	bool bCastRightDown;
 
 	UPROPERTY(BlueprintReadWrite)
+	bool bCastLeftSecondaryDown;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bCastRightSecondaryDown;
+
+	UPROPERTY(BlueprintReadWrite)
 	bool bRechargeDown;
 
 	UPROPERTY(BlueprintReadWrite)

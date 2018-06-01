@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class UParticleSystemComponent;
+class AFighter;
 
 UCLASS()
 class RITES_API AAbility : public AActor
@@ -18,35 +19,61 @@ public:
 	// Sets default values for this actor's properties
 	AAbility();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
+	// Accessors
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AFighter* GetCaster() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsTimed() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetLifetime() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsInvulnerable() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 GetHealth() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetTimeRemaining() const;
+
+	// Mutators
+	UFUNCTION(BlueprintCallable)
+	virtual void SetCaster(AFighter* NewCaster);
+
+	UFUNCTION(BlueprintCallable)
+	void SetInvulnerable(bool bNewInvulnerable);
+
+	UFUNCTION(BlueprintCallable)
+	void SetHealth(int32 NewHealth);
+
 protected:
 
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* MeshComponent;
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere)
-	UParticleSystemComponent* ParticleComponent;
+	UFUNCTION()
+	virtual void OnAbilityDestroyed(AActor* Actor);
 
-	UPROPERTY(EditAnywhere)
-	bool bTimed = true;
-
-	UPROPERTY(EditAnywhere)
-	float Duration = 1.0f;
+	UPROPERTY(VisibleAnywhere, Replicated)
+	AFighter* Caster;
 
 	UPROPERTY(EditAnywhere)
-	bool bInvulnerable = true;
+	bool bTimed;
+
+	UPROPERTY(EditAnywhere)
+	float Lifetime;
 
 	UPROPERTY(EditAnywhere, Replicated)
-	int32 Health = 100;
+	bool bInvulnerable;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(EditAnywhere, Replicated)
+	int32 Health;
+
+	UPROPERTY(VisibleAnywhere)
 	float TimeRemaining;
 };

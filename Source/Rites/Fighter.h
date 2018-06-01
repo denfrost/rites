@@ -20,8 +20,10 @@
 class UFighterAnimInstance;
 class UFighterMovementComponent;
 class ADrop;
+class AAbility;
 class UItem;
 class UGear;
+class UGem;
 struct FItemData;
 
 UCLASS()
@@ -37,6 +39,14 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void Move(FVector Direction);
+
+	void SetGlobalCooldown(float CooldownTime);
+
+	void SetLastActivatedGem(UGem* Gem);
+
+	void AddActiveAbility(AAbility* Ability);
+
+	void RemoveActiveAbility(AAbility* Ability);
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
@@ -57,6 +67,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EGearSlot ConvertIntToGearSlot(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	float GetGlobalCooldownRemainin() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsOnGlobalCooldown() const;
 
 	UFUNCTION(BlueprintCallable)
 	void PickupItem(int32 ItemInstanceID);
@@ -92,9 +108,15 @@ protected:
 
 	void UpdateRecharge(float DeltaTime, const FInputState& InputState);
 
-	void UpdateActivate(float DeltaTime, const FInputState& InputState);
+	void UpdateInteract(float DeltaTime, const FInputState& InputState);
+
+	void UpdateGlobalCooldown(float DeltaTime);
+
+	void UpdateGems(float DeltaTime);
 
 	void UpdateAnimationState();
+
+	void UpdateGemActivation(EGearSlot GearSlot, int32 SocketIndex,bool ButtonDown, bool PreviousButtonDown, float DeltaTime);
 
 	EGearSlot GetAvailableSlotForGear(UGear* Gear);
 
@@ -105,6 +127,8 @@ protected:
 	bool MoveCarriedGemToGearSocket(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
 	bool MoveSocketedGemToCarried(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
+
+	UGem* GetEquippedGem(EGearSlot GearSlot, int32 SocketIndex);
 
 // Blueprint Implementable Events
 
@@ -164,6 +188,18 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void C_UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_ActivateGem(EGearSlot GearSlot, int32 SocketIndex);
+
+	UFUNCTION(Client, Reliable)
+	void C_ActivateGem(EGearSlot GearSlot, int32 SocketIndex);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_ReleaseGem(EGearSlot GearSlot, int32 SocketIndex);
+
+	UFUNCTION(Client, Reliable)
+	void C_ReleaseGem(EGearSlot GearSlot, int32 SocketIndex);
+
 // Components
 
 	UPROPERTY(VisibleAnywhere)
@@ -204,23 +240,38 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated)
 	FFighterStats Stats;
 
-	UFighterAnimInstance* AnimInstance;
-
-	FInputState PreviousInputState;
-
-	bool bGrounded;
-	bool bJumping;
-
-	FVector2D InputDirection;
-	FVector MovementVelocity;
-
-	FVector ExternalVelocity;
-
-	TArray<ADrop*> DropsInPickupRadius;
-
 	UPROPERTY(EditAnywhere)
 	TArray<UItem*> CarriedItems;
 
 	UPROPERTY(EditAnywhere)
 	TArray<UGear*> EquippedGear;
+
+	UPROPERTY(VisibleAnywhere)
+	float GlobalCooldownRemaining;
+
+	UPROPERTY(VisibleAnywhere)
+	FVector ExternalVelocity;
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<ADrop*> DropsInPickupRadius;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bGrounded;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bJumping;
+
+	UPROPERTY()
+	UFighterAnimInstance* AnimInstance;
+
+	UPROPERTY(VisibleAnywhere)
+	UGem* LastActivatedGem;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TArray<AAbility*> ActiveAbilities;
+
+	FInputState PreviousInputState;
+
+	FVector2D InputDirection;
+	FVector MovementVelocity;
 };

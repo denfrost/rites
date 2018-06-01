@@ -17,6 +17,8 @@ class RITES_API UGem : public UItem
 	
 public:
 
+	UGem();
+
 	UFUNCTION(BlueprintCallable)
 	EGemColor GetColor() const;
 
@@ -32,31 +34,44 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int32 GetCharges() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void Activate(AFighter* Fighter);
+	UFUNCTION(BlueprintCallable)
+	float GetGlobalCooldownTime() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void Release(AFighter* Fighter);
+	UFUNCTION(BlueprintCallable)
+	bool IsChanneled() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void Tick(AFighter* Fighter, float DeltaTime);
+	UFUNCTION(BlueprintCallable)
+	bool IsCurrentlyBeingChanneled() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnEquip(AFighter* Fighter);
+	UFUNCTION(BlueprintCallable)
+	bool IsOnCooldown() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnUnequip(AFighter* Fighter);
+	UFUNCTION(BlueprintCallable)
+	bool IsPassive() const;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void OnDamaged(AFighter* Fighter);
+	virtual void Activate(AFighter* Fighter);
+
+	virtual void Release(AFighter* Fighter);
+
+	virtual void Tick(AFighter* Fighter, float DeltaTime);
+
+	virtual void OnEquip(AFighter* Fighter);
+
+	virtual void OnUnequip(AFighter* Fighter);
+
+	virtual void OnDamaged(AFighter* Fighter);
+
+	void RegisterActivate(AFighter* Fighter);
+
+	void RegisterRelease(AFighter* Fighter);
 
 protected:
 
 	UPROPERTY(EditAnywhere)
 	EGemColor Color;
 
-	//UPROPERTY(EditAnywhere)
-	//TSubclassOf<AAbility> AbilityClass;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AAbility> AbilityClass;
 
 	UPROPERTY(EditAnywhere)
 	float CooldownTime;
@@ -69,4 +84,16 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	int32 Charges;
+
+	UPROPERTY(EditAnywhere)
+	float GlobalCooldownTime;
+
+	UPROPERTY(EditAnywhere)
+	bool bChanneled;
+
+	UPROPERTY(EditAnywhere)
+	bool bPassive;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bCurrentlyBeingChanneled;
 };
