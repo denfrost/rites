@@ -213,8 +213,12 @@ void AFighter::Tick(float DeltaTime)
 		S_SyncTransform(GetActorLocation(), GetActorRotation(), LookAngle);
 		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
 
-
 		PreviousInputState = InputState;
+	}
+	else if (HasAuthority())
+	{
+		UpdateGlobalCooldown(DeltaTime);
+		UpdateGems(DeltaTime);
 	}
 
 	UpdateAnimationState();
