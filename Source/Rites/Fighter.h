@@ -138,7 +138,7 @@ protected:
 // Network Functions
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void S_SyncTransform(FVector location, FRotator rotation);
+	void S_SyncTransform(FVector Location, FRotator Rotation, float LookAngle);
 
 	UFUNCTION(Server, Unreliable, WithValidation)
 	void S_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);

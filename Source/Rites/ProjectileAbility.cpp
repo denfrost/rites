@@ -14,7 +14,7 @@ AProjectileAbility::AProjectileAbility()
 	RootComponent = MeshComponent;
 
 	Speed = 4000.0f;
-	Gravity = 980.0f;
+	Gravity = -980.0f;
 	Damage = 30.0f;
 	MinimumDampenedDamage = 5.0f;
 	Lifetime = 5.0f;

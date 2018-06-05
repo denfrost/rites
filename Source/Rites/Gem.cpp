@@ -3,6 +3,7 @@
 #include "Gem.h"
 #include "Fighter.h"
 #include "Ability.h"
+#include "Engine/Engine.h"
 
 UGem::UGem()
 {
@@ -80,10 +81,13 @@ void UGem::Activate(AFighter* Fighter)
 
 	ensure(AbilityClass != nullptr);
 
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Gem Activated!"));
+
 	if (AbilityClass != nullptr)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Ability Spawned!"));
 		FVector SpawnLocation = Fighter->GetActorLocation();
-		AAbility* SpawnedAbility = Cast<AAbility>(GetWorld()->SpawnActor(AbilityClass.Get(), &SpawnLocation));
+		AAbility* SpawnedAbility = Cast<AAbility>(Fighter->GetWorld()->SpawnActor(AbilityClass.Get(), &SpawnLocation));
 		
 		ensure(SpawnedAbility != nullptr);
 		SpawnedAbility->SetCaster(Fighter);

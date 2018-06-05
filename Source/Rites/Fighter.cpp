@@ -202,8 +202,9 @@ void AFighter::Tick(float DeltaTime)
 		UpdateGlobalCooldown(DeltaTime);
 		UpdateGems(DeltaTime);
 
-		S_SyncTransform(GetActorLocation(), GetActorRotation());
+		S_SyncTransform(GetActorLocation(), GetActorRotation(), SpringArmComponent->RelativeRotation.Pitch);
 		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
+
 
 		PreviousInputState = InputState;
 	}
@@ -256,7 +257,7 @@ void AFighter::UpdateMovementXY(float DeltaTime, const FInputState& InputState)
 	FVector OldLocation = GetActorLocation();
 	InputDirection = InputState.MoveDirection;
 
-	FVector MoveDirection = FVector(-InputDirection.X, InputDirection.Y, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
+	FVector MoveDirection = FVector(InputDirection.Y, InputDirection.X, 0.0f).RotateAngleAxis(GetActorRotation().Yaw, FVector::UpVector);
 	MoveDirection.Normalize();
 
 	MovementVelocity = MoveDirection * Stats.MoveSpeed;
@@ -626,13 +627,14 @@ UGem* AFighter::GetEquippedGem(EGearSlot GearSlot, int32 SocketIndex)
 	return Gem;
 }
 
-void AFighter::S_SyncTransform_Implementation(FVector location, FRotator rotation)
+void AFighter::S_SyncTransform_Implementation(FVector Location, FRotator Rotation, float LookAngle)
 {
-	SetActorLocation(location);
-	SetActorRotation(rotation);
+	SetActorLocation(Location);
+	SetActorRotation(Rotation);
+	SpringArmComponent->RelativeRotation.Pitch = LookAngle;
 }
 
-bool AFighter::S_SyncTransform_Validate(FVector location, FRotator rotation)
+bool AFighter::S_SyncTransform_Validate(FVector location, FRotator rotation, float LookAngle)
 {
 	return true;
 }
