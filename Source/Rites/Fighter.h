@@ -50,6 +50,8 @@ public:
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
+	FVector GetProjectileSpawnLocation() const;
+
 	UFUNCTION()
 	void BeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
 
@@ -73,6 +75,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsOnGlobalCooldown() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetLookAngle() const;
 
 	UFUNCTION(BlueprintCallable)
 	void PickupItem(int32 ItemInstanceID);
@@ -233,6 +238,9 @@ protected:
 	USkeletalMeshComponent* RightHandMeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	USceneComponent* ProjectileSpawnComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	UFighterMovementComponent* MovementComponent;
 
 // Properties
@@ -269,6 +277,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	TArray<AAbility*> ActiveAbilities;
+
+	UPROPERTY(Replicated)
+	float LookAngle;
 
 	FInputState PreviousInputState;
 

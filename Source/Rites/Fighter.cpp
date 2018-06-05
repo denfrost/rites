@@ -29,6 +29,7 @@ AFighter::AFighter()
 	LegMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegMesh"));
 	LeftHandMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LeftHandMesh"));
 	RightHandMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RightHandMesh"));
+	ProjectileSpawnComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Projectile Spawn"));
 	MovementComponent = CreateDefaultSubobject<UFighterMovementComponent>(TEXT("Movement"));
 
 	RootComponent = CapsuleComponent;
@@ -41,6 +42,7 @@ AFighter::AFighter()
 	LegMeshComponent->SetupAttachment(BodyMeshComponent);
 	LeftHandMeshComponent->SetupAttachment(BodyMeshComponent);
 	RightHandMeshComponent->SetupAttachment(BodyMeshComponent);
+	ProjectileSpawnComponent->SetupAttachment(BodyMeshComponent, TEXT("Neck"));
 
 	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
 	MovementComponent->UpdatedComponent = RootComponent;
@@ -81,6 +83,7 @@ void AFighter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifet
 
 	DOREPLIFETIME(AFighter, Stats);
 	DOREPLIFETIME(AFighter, ActiveAbilities);
+	DOREPLIFETIME(AFighter, LookAngle);
 }
 
 
@@ -149,6 +152,11 @@ bool AFighter::IsOnGlobalCooldown() const
 	return GlobalCooldownRemaining > 0.0f;
 }
 
+float AFighter::GetLookAngle() const
+{
+	return LookAngle;
+}
+
 void AFighter::PickupItem(int32 ItemInstanceID)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Purple, TEXT("Pickup!"));
@@ -202,7 +210,7 @@ void AFighter::Tick(float DeltaTime)
 		UpdateGlobalCooldown(DeltaTime);
 		UpdateGems(DeltaTime);
 
-		S_SyncTransform(GetActorLocation(), GetActorRotation(), SpringArmComponent->RelativeRotation.Pitch);
+		S_SyncTransform(GetActorLocation(), GetActorRotation(), LookAngle);
 		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
 
 
@@ -238,6 +246,11 @@ void AFighter::AddActiveAbility(AAbility* Ability)
 void AFighter::RemoveActiveAbility(AAbility* Ability)
 {
 	ActiveAbilities.Remove(Ability);
+}
+
+FVector AFighter::GetProjectileSpawnLocation() const
+{
+	return ProjectileSpawnComponent->GetComponentLocation();
 }
 
 void AFighter::UpdateJump(float DeltaTime, const FInputState& InputState)
@@ -351,6 +364,8 @@ void AFighter::UpdateOrientation(float DeltaTime, const FInputState& InputState)
 
 	SetActorRotation(NewActorRotation);
 	SpringArmComponent->SetRelativeRotation(NewSpringArmRotation);
+
+	LookAngle = SpringArmComponent->RelativeRotation.Pitch;
 }
 
 void AFighter::UpdateCasting(float DeltaTime, const FInputState& InputState)
@@ -402,6 +417,7 @@ void AFighter::UpdateAnimationState()
 	AnimInstance->bGrounded = bGrounded;
 	AnimInstance->Velocity = MovementVelocity;
 	AnimInstance->InputDirection = InputDirection;
+	AnimInstance->LookAngle = LookAngle;
 }
 
 void AFighter::UpdateGemActivation(EGearSlot GearSlot, int32 SocketIndex, bool ButtonDown, bool PreviousButtonDown, float DeltaTime)
@@ -627,11 +643,11 @@ UGem* AFighter::GetEquippedGem(EGearSlot GearSlot, int32 SocketIndex)
 	return Gem;
 }
 
-void AFighter::S_SyncTransform_Implementation(FVector Location, FRotator Rotation, float LookAngle)
+void AFighter::S_SyncTransform_Implementation(FVector Location, FRotator Rotation, float NewLookAngle)
 {
 	SetActorLocation(Location);
 	SetActorRotation(Rotation);
-	SpringArmComponent->RelativeRotation.Pitch = LookAngle;
+	LookAngle = NewLookAngle;
 }
 
 bool AFighter::S_SyncTransform_Validate(FVector location, FRotator rotation, float LookAngle)

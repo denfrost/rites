@@ -23,7 +23,7 @@ void UProjectileGem::Activate(AFighter* Fighter)
 	if (AbilityClass != nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Projectile Ability Spawned!"));
-		FVector SpawnLocation = Fighter->GetActorLocation();
+		FVector SpawnLocation = Fighter->GetProjectileSpawnLocation();
 
 		for (int32 i = 0; i < BurstCount; ++i)
 		{
@@ -38,8 +38,11 @@ void UProjectileGem::Activate(AFighter* Fighter)
 				//float SpreadAngle = FMath::RandRange(0.0f, SpreadAngle);
 				//float RadialAngle = FMath::RandRange(0.0f, 360.0f);
 				FVector Direction = Fighter->GetActorForwardVector();
-
+				float LookAngle = Fighter->GetLookAngle();
+				Direction = Direction.RotateAngleAxis(-LookAngle, Fighter->GetActorRightVector());
 				ProjectileAbility->InitDirection(Direction);
+
+				ProjectileAbility->SetActorRotation(Direction.ToOrientationRotator());
 			}
 			else
 			{
