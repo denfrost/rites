@@ -83,6 +83,15 @@ public:
 	bool IsFriendly(AFighter* OtherFighter);
 
 	UFUNCTION(BlueprintCallable)
+	USkeletalMeshComponent* GetBodyMeshComponent();
+
+	UFUNCTION(BlueprintCallable)
+	void SetCastLeftAnimState(bool bCastLeft);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCastRightAnimState(bool bCastRight);
+
+	UFUNCTION(BlueprintCallable)
 	void Damage(int32 Damage);
 
 	UFUNCTION(BlueprintCallable)
@@ -152,10 +161,10 @@ protected:
 	void S_SyncTransform(FVector Location, FRotator Rotation, float LookAngle);
 
 	UFUNCTION(Server, Unreliable, WithValidation)
-	void S_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
+	void S_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded, bool bCastLeft, bool bCastRight);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void M_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded);
+	void M_SyncAnimState(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded, bool bCastLeft, bool bCastRight);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void S_PickupItem(int32 ItemInstanceID);
@@ -289,6 +298,12 @@ protected:
 
 	UPROPERTY(Replicated)
 	float LookAngle;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bCastLeft;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bCastRight;
 
 	FInputState PreviousInputState;
 

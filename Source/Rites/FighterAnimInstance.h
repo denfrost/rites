@@ -7,6 +7,8 @@
 #include "Enums.h"
 #include "FighterAnimInstance.generated.h"
 
+class AFighter;
+
 /**
  * 
  */
@@ -40,4 +42,13 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	bool bGrounded;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bCastLeft;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bCastRight;
+
+	UPROPERTY(BlueprintReadWrite)
+	AFighter* Fighter;
 };

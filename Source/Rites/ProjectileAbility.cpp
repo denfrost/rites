@@ -5,6 +5,7 @@
 #include "UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 AProjectileAbility::AProjectileAbility()
 {
@@ -76,12 +77,21 @@ void AProjectileAbility::BeginOverlap(class UPrimitiveComponent* ThisComp, class
 
 	if (Fighter != nullptr &&
 		Fighter != Caster &&
+		Fighter->GetBodyMeshComponent() == OtherComp &&
 		(bHitFriendly || !Caster->IsFriendly(Fighter)))
 	{
 
 		if (HasAuthority())
 		{
-			Fighter->Damage(Damage);
+			float DamageToApply = Damage;
+
+			if (SweepResult.BoneName == TEXT("Head"))
+			{
+				DamageToApply *= 1.5f;
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("HEADSHOT"));
+			}
+
+			Fighter->Damage(DamageToApply);
 		}
 
 		Destroy();

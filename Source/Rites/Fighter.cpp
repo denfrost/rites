@@ -47,6 +47,9 @@ AFighter::AFighter()
 	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
 	MovementComponent->UpdatedComponent = RootComponent;
 
+	BodyMeshComponent->bGenerateOverlapEvents = true;
+	BodyMeshComponent->SetCollisionProfileName(TEXT("PawnHit"));
+
 	PickupSphereComponent->SetCollisionProfileName(TEXT("OverlapAll"));
 	PickupSphereComponent->bGenerateOverlapEvents = true;
 	PickupSphereComponent->InitSphereRadius(120.0f);
@@ -68,6 +71,8 @@ void AFighter::BeginPlay()
 	
 	AnimInstance = Cast<UFighterAnimInstance>(BodyMeshComponent->GetAnimInstance());
 	ensure(AnimInstance != nullptr);
+
+	AnimInstance->Fighter = this;
 
 	// Set this anim instance to control the other skeletal meshes
 	HeadMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
@@ -163,6 +168,21 @@ bool AFighter::IsFriendly(AFighter* OtherFighter)
 	return OtherFighter == this;
 }
 
+USkeletalMeshComponent* AFighter::GetBodyMeshComponent()
+{
+	return BodyMeshComponent;
+}
+
+void AFighter::SetCastLeftAnimState(bool bCastLeft)
+{
+	this->bCastLeft = bCastLeft;
+}
+
+void AFighter::SetCastRightAnimState(bool bCastRight)
+{
+	this->bCastRight = bCastRight;
+}
+
 void AFighter::Damage(int32 Damage)
 {
 	S_Damage(Damage);
@@ -222,7 +242,7 @@ void AFighter::Tick(float DeltaTime)
 		UpdateGems(DeltaTime);
 
 		S_SyncTransform(GetActorLocation(), GetActorRotation(), LookAngle);
-		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded);
+		S_SyncAnimState(InputDirection, MovementVelocity, bJumping, bGrounded, bCastLeft, bCastRight);
 
 		PreviousInputState = InputState;
 	}
@@ -433,6 +453,8 @@ void AFighter::UpdateAnimationState()
 	AnimInstance->Velocity = MovementVelocity;
 	AnimInstance->InputDirection = InputDirection;
 	AnimInstance->LookAngle = LookAngle;
+	AnimInstance->bCastLeft = bCastLeft;
+	AnimInstance->bCastRight = bCastRight;
 }
 
 void AFighter::UpdateGemActivation(EGearSlot GearSlot, int32 SocketIndex, bool ButtonDown, bool PreviousButtonDown, float DeltaTime)
@@ -447,8 +469,17 @@ void AFighter::UpdateGemActivation(EGearSlot GearSlot, int32 SocketIndex, bool B
 			!Gem->IsOnCooldown() &&
 			(Gem->GetMaxChargers() == 0 || Gem->GetCharges() > 0))
 		{
-			// Activate the gem if 
+			// Activate the gem if off cooldown.
 			S_ActivateGem(GearSlot, SocketIndex);
+
+			if (GearSlot == EGearSlot::LeftGlove)
+			{
+				bCastLeft = true;
+			}
+			else if (GearSlot == EGearSlot::RightGlove)
+			{
+				bCastRight = true;
+			}
 		}
 		else if (!ButtonDown &&
 				Gem->IsCurrentlyBeingChanneled())
@@ -670,22 +701,24 @@ bool AFighter::S_SyncTransform_Validate(FVector location, FRotator rotation, flo
 	return true;
 }
 
-void AFighter::S_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+void AFighter::S_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded, bool bCastLeft, bool bCastRight)
 {
 	this->InputDirection = InputDirection;
 	this->MovementVelocity = Velocity;
 	this->bJumping = bJumping;
 	this->bGrounded = bGrounded;
+	this->bCastLeft = bCastLeft;
+	this->bCastRight = bCastRight;
 
-	M_SyncAnimState(InputDirection, Velocity, bJumping, bGrounded);
+	M_SyncAnimState(InputDirection, Velocity, bJumping, bGrounded, bCastLeft, bCastRight);
 }
 
-bool AFighter::S_SyncAnimState_Validate(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+bool AFighter::S_SyncAnimState_Validate(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded, bool bCastLeft, bool bCastRight)
 {
 	return true;
 }
 
-void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded)
+void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector Velocity, bool bJumping, bool bGrounded, bool bCastLeft, bool bCastRight)
 {
 	if (!IsLocallyControlled())
 	{
@@ -693,6 +726,8 @@ void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector 
 		this->bGrounded = bGrounded;
 		this->MovementVelocity = Velocity;
 		this->InputDirection = InputDirection;
+		this->bCastLeft = bCastLeft;
+		this->bCastRight = bCastRight;
 	}
 }
 
