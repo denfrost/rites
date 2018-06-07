@@ -3,14 +3,14 @@
 #include "ProjectileAbility.h"
 #include "Fighter.h"
 #include "UnrealNetwork.h"
-
+#include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
 
 AProjectileAbility::AProjectileAbility()
 {
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComponent->SetCollisionProfileName(TEXT("Projectile"));
-	MeshComponent->bGenerateOverlapEvents = true;
+	MeshComponent->bGenerateOverlapEvents = false;
 	RootComponent = MeshComponent;
 
 	Speed = 4000.0f;
@@ -27,6 +27,20 @@ AProjectileAbility::AProjectileAbility()
 void AProjectileAbility::BeginPlay()
 {
 	Super::BeginPlay();
+
+	MeshComponent->OnComponentBeginOverlap.AddDynamic(this, &AProjectileAbility::BeginOverlap);
+	MeshComponent->OnComponentEndOverlap.AddDynamic(this, &AProjectileAbility::EndOverlap);
+	OnDestroyed.AddDynamic(this, &AProjectileAbility::OnProjectileDestroyed);
+}
+
+void AProjectileAbility::OnProjectileDestroyed(AActor* Actor)
+{
+	if (ImpactParticle != nullptr)
+	{
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(GetActorLocation());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, SpawnTransform);
+	}
 }
 
 void AProjectileAbility::OnRep_InitialVelocity()
@@ -49,6 +63,34 @@ void AProjectileAbility::Tick(float DeltaTime)
 		// This actor hit something like a wall. Destroy it!
 		Destroy();
 	}
+}
+
+void AProjectileAbility::EnableOverlaps(bool bEnable)
+{
+	MeshComponent->bGenerateOverlapEvents = bEnable;
+}
+
+void AProjectileAbility::BeginOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+{
+	AFighter* Fighter = Cast<AFighter>(OtherActor);
+
+	if (Fighter != nullptr &&
+		Fighter != Caster &&
+		(bHitFriendly || !Caster->IsFriendly(Fighter)))
+	{
+
+		if (HasAuthority())
+		{
+			Fighter->Damage(Damage);
+		}
+
+		Destroy();
+	}
+}
+
+void AProjectileAbility::EndOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
 }
 
 void AProjectileAbility::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

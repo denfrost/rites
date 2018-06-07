@@ -80,6 +80,12 @@ public:
 	float GetLookAngle() const;
 
 	UFUNCTION(BlueprintCallable)
+	bool IsFriendly(AFighter* OtherFighter);
+
+	UFUNCTION(BlueprintCallable)
+	void Damage(int32 Damage);
+
+	UFUNCTION(BlueprintCallable)
 	void PickupItem(int32 ItemInstanceID);
 
 	UFUNCTION(BlueprintCallable)
@@ -204,6 +210,9 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void C_ReleaseGem(EGearSlot GearSlot, int32 SocketIndex);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void S_Damage(float Damage);
 
 // Components
 

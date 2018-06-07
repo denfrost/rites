@@ -10,6 +10,7 @@ UProjectileGem::UProjectileGem()
 	BurstCount = 1;
 	SpreadAngle = 0.0f;
 	AutoFireDelay = 0.0f;
+	AimOffset = FRotator(5.0f, -2.0f, 0.0f);
 }
 
 void UProjectileGem::Activate(AFighter* Fighter)
@@ -40,9 +41,13 @@ void UProjectileGem::Activate(AFighter* Fighter)
 				FVector Direction = Fighter->GetActorForwardVector();
 				float LookAngle = Fighter->GetLookAngle();
 				Direction = Direction.RotateAngleAxis(-LookAngle, Fighter->GetActorRightVector());
-				ProjectileAbility->InitDirection(Direction);
+				FRotator DirectionOrientation = Direction.ToOrientationRotator();
+				DirectionOrientation += AimOffset;
+				ProjectileAbility->InitDirection(DirectionOrientation.Vector());
 
 				ProjectileAbility->SetActorRotation(Direction.ToOrientationRotator());
+
+				ProjectileAbility->EnableOverlaps(true);
 			}
 			else
 			{

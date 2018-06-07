@@ -22,6 +22,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void EnableOverlaps(bool bEnable);
+
 	// Accessors
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AFighter* GetCaster() const;

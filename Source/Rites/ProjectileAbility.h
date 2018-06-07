@@ -22,6 +22,14 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void EnableOverlaps(bool bEnable) override;
+
+	UFUNCTION()
+	void BeginOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
+
+	UFUNCTION()
+	void EndOverlap(class UPrimitiveComponent* ThisComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 	UFUNCTION(BlueprintCallable)
 	void InitDirection(FVector Direction);
 
@@ -79,6 +87,9 @@ protected:
 	UFUNCTION()
 	void OnRep_InitialVelocity();
 
+	UFUNCTION()
+	void OnProjectileDestroyed(AActor* Actor);
+
 	// It should be assumed that all projectiles use a mesh.
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
@@ -109,6 +120,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	FVector Velocity;
+
+	UPROPERTY(EditAnywhere)
+	bool bHitFriendly;
 
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticle;

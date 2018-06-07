@@ -37,6 +37,11 @@ void AAbility::OnAbilityDestroyed(AActor* Actor)
 	}
 }
 
+void AAbility::EnableOverlaps(bool bEnable)
+{
+
+}
+
 // Called every frame
 void AAbility::Tick(float DeltaTime)
 {

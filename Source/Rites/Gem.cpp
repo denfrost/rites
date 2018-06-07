@@ -91,6 +91,8 @@ void UGem::Activate(AFighter* Fighter)
 		
 		ensure(SpawnedAbility != nullptr);
 		SpawnedAbility->SetCaster(Fighter);
+
+		SpawnedAbility->EnableOverlaps(true);
 	}
 }
 

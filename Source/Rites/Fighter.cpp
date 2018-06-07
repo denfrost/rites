@@ -157,6 +157,17 @@ float AFighter::GetLookAngle() const
 	return LookAngle;
 }
 
+bool AFighter::IsFriendly(AFighter* OtherFighter)
+{
+	// TODO: Implement team logic
+	return OtherFighter == this;
+}
+
+void AFighter::Damage(int32 Damage)
+{
+	S_Damage(Damage);
+}
+
 void AFighter::PickupItem(int32 ItemInstanceID)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Purple, TEXT("Pickup!"));
@@ -1049,4 +1060,21 @@ void AFighter::C_ReleaseGem_Implementation(EGearSlot GearSlot, int32 SocketIndex
 	{
 		Gem->RegisterRelease(this);
 	}
+}
+
+void AFighter::S_Damage_Implementation(float Damage)
+{
+	Stats.Health -= Damage;
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("Health: %d"), Stats.Health));
+
+	if (Stats.Health < 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Dead"));
+	}
+}
+
+bool AFighter::S_Damage_Validate(float Damage)
+{
+	return true;
 }

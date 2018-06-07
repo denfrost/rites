@@ -31,4 +31,7 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	float AutoFireDelay;
+
+	UPROPERTY(EditAnywhere)
+	FRotator AimOffset;
 };
