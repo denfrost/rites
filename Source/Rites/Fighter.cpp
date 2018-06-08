@@ -10,6 +10,7 @@
 #include "Item.h"
 #include "Gear.h"
 #include "Gem.h"
+#include "ArenaGameMode.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 
@@ -80,6 +81,9 @@ void AFighter::BeginPlay()
 	LegMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
 	LeftHandMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
 	RightHandMeshComponent->SetMasterPoseComponent(BodyMeshComponent);
+
+	// Save off the initial stats so they can be used to replace stats when respawning the fighter
+	InitialStats = Stats;
 }
 
 void AFighter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -217,6 +221,55 @@ void AFighter::SocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInst
 void AFighter::UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
 {
 	S_UnsocketGem(GearInstanceID, GearSlot, GemInstanceID);
+}
+
+UFUNCTION(BlueprintCallable)
+void AFighter::DropAllItems()
+{
+	// Drop inventory
+	for (int32 i = CarriedItems.Num() - 1; i >= 0 ; --i)
+	{
+		ensure(CarriedItems[i] != nullptr);
+
+		if (CarriedItems[i] != nullptr)
+		{
+			S_DropItem(CarriedItems[i]->GetInstanceID());
+		}
+	}
+
+	// Drop all equipment
+	for (int32 i = 0; i < EquippedGear.Num(); ++i)
+	{
+		if (EquippedGear[i] != nullptr)
+		{
+			int32 InstanceID = EquippedGear[i]->GetInstanceID();
+			S_UnequipItem(InstanceID, static_cast<EGearSlot>(i));
+			S_DropItem(InstanceID);
+		}
+	}
+}
+
+UFUNCTION(BlueprintCallable)
+void AFighter::ResetStats()
+{
+	ensure(HasAuthority());
+
+	if (HasAuthority())
+	{
+		Stats = InitialStats;
+	}
+}
+
+UFUNCTION(BlueprintCallable)
+void AFighter::Transport(FVector NewLocation)
+{
+	ensure(HasAuthority());
+
+	if (HasAuthority())
+	{
+		SetActorLocation(NewLocation);
+		C_Transport(NewLocation);
+	}
 }
 
 // Called every frame
@@ -1106,10 +1159,22 @@ void AFighter::S_Damage_Implementation(float Damage)
 	if (Stats.Health < 0)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Dead"));
+		AArenaGameMode* ArenaGameMode = Cast<AArenaGameMode>(GetWorld()->GetAuthGameMode());
+		
+		ensure(ArenaGameMode != nullptr);
+		if (ArenaGameMode != nullptr)
+		{
+			ArenaGameMode->OnFighterKilled(this);
+		}
 	}
 }
 
 bool AFighter::S_Damage_Validate(float Damage)
 {
 	return true;
+}
+
+void AFighter::C_Transport_Implementation(FVector NewLocation)
+{
+	SetActorLocation(NewLocation);
 }

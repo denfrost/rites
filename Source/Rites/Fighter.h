@@ -112,6 +112,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnsocketGem(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID);
 
+	UFUNCTION(BlueprintCallable)
+	void DropAllItems();
+
+	UFUNCTION(BlueprintCallable)
+	void ResetStats();
+
+	UFUNCTION(BlueprintCallable)
+	void Transport(FVector NewLocation);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -223,6 +232,9 @@ protected:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void S_Damage(float Damage);
 
+	UFUNCTION(Client, Reliable)
+	void C_Transport(FVector NewLocation);
+
 // Components
 
 	UPROPERTY(VisibleAnywhere)
@@ -265,6 +277,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Replicated)
 	FFighterStats Stats;
+
+	UPROPERTY(VisibleAnywhere)
+	FFighterStats InitialStats;
 
 	UPROPERTY(EditAnywhere)
 	TArray<UItem*> CarriedItems;
