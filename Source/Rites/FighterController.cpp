@@ -39,6 +39,27 @@ void AFighterController::SetupInputComponent()
 	}
 }
 
+void AFighterController::SetPawn(APawn* InPawn)
+{
+	Super::SetPawn(InPawn);
+
+	URitesGameInstance* RitesGameInstance = Cast<URitesGameInstance>(GetGameInstance());
+
+	if (RitesGameInstance != nullptr)
+	{
+		if (InPawn != nullptr &&
+			!RitesGameInstance->IsMenuOpen("HUD"))
+		{
+			RitesGameInstance->OpenMenu("HUD");
+		}
+		else if (InPawn == nullptr &&
+			RitesGameInstance->IsMenuOpen("HUD"))
+		{
+			RitesGameInstance->CloseMenu("HUD");
+		}
+	}
+}
+
 const FInputState& AFighterController::GetInputState() const
 {
 	return InputState;

@@ -85,6 +85,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	USkeletalMeshComponent* GetBodyMeshComponent();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FFighterStats GetFighterStats() const;
+
 	UFUNCTION(BlueprintCallable)
 	void SetCastLeftAnimState(bool bCastLeft);
 
@@ -162,7 +165,10 @@ protected:
 // Blueprint Implementable Events
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void RefreshInventoryMenu();
+	void DirtyInventoryMenu();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void DirtyHUDMenu(bool bDirtyHealth);
 
 // Network Functions
 
@@ -235,6 +241,11 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void C_Transport(FVector NewLocation);
 
+// OnRep
+
+	UFUNCTION()
+	void OnRep_Stats();
+
 // Components
 
 	UPROPERTY(VisibleAnywhere)
@@ -275,7 +286,7 @@ protected:
 
 // Properties
 
-	UPROPERTY(EditAnywhere, Replicated)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Stats)
 	FFighterStats Stats;
 
 	UPROPERTY(VisibleAnywhere)

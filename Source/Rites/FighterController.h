@@ -21,6 +21,8 @@ public:
 
 	void SetupInputComponent() override;
 
+	virtual void SetPawn(APawn* InPawn) override;
+
 	const FInputState& GetInputState() const;
 
 protected:

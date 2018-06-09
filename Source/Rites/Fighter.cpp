@@ -106,6 +106,7 @@ void AFighter::BeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, cla
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Drop Add To Pickup List"));
 			DropsInPickupRadius.Add(OtherDrop);
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -120,6 +121,7 @@ void AFighter::EndBeginPickupSphereOverlap(class UPrimitiveComponent* ThisComp, 
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Drop Removed From Pickup List"));
 			DropsInPickupRadius.Remove(OtherDrop);
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -175,6 +177,11 @@ bool AFighter::IsFriendly(AFighter* OtherFighter)
 USkeletalMeshComponent* AFighter::GetBodyMeshComponent()
 {
 	return BodyMeshComponent;
+}
+
+FFighterStats AFighter::GetFighterStats() const
+{
+	return Stats;
 }
 
 void AFighter::SetCastLeftAnimState(bool bCastLeft)
@@ -831,7 +838,7 @@ void AFighter::S_PickupItem_Implementation(int32 ItemInstanceID)
 				}
 				else
 				{
-					RefreshInventoryMenu();
+					DirtyInventoryMenu();
 				}
 				
 				break;
@@ -852,7 +859,7 @@ void AFighter::C_AddItem_Implementation(FItemData ItemData)
 	NewItem->SetItemData(ItemData);
 	CarriedItems.Add(NewItem);
 
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::C_AddItem_1Socket_Implementation(FItemData BaseItemData, FItemData SocketedGem0Data)
@@ -877,7 +884,7 @@ void AFighter::C_AddItem_1Socket_Implementation(FItemData BaseItemData, FItemDat
 
 	CarriedItems.Add(NewItem);
 
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::C_AddItem_2Socket_Implementation(FItemData BaseItemData, FItemData SocketedGem0Data, FItemData SocketedGem1Data)
@@ -904,7 +911,7 @@ void AFighter::C_AddItem_2Socket_Implementation(FItemData BaseItemData, FItemDat
 
 	CarriedItems.Add(NewItem);
 
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
@@ -930,7 +937,7 @@ void AFighter::S_DropItem_Implementation(int32 ItemInstanceID)
 			}
 			else
 			{
-				RefreshInventoryMenu();
+				DirtyInventoryMenu();
 			}
 		}
 	}
@@ -955,7 +962,7 @@ void AFighter::C_RemoveItem_Implementation(int32 ItemInstanceID)
 		}
 	}
 
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
@@ -970,7 +977,7 @@ void AFighter::S_EquipItem_Implementation(int32 ItemInstanceID)
 		}
 		else
 		{
-			RefreshInventoryMenu();
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -985,7 +992,7 @@ void AFighter::C_EquipItem_Implementation(int32 ItemInstanceID)
 	ensure(IsLocallyControlled());
 
 	MoveCarriedItemToEquipSlot(ItemInstanceID);
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot GearSlot)
@@ -1000,7 +1007,7 @@ void AFighter::S_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot Gear
 		}
 		else
 		{
-			RefreshInventoryMenu();
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -1015,7 +1022,7 @@ void AFighter::C_UnequipItem_Implementation(int32 ItemInstanceID, EGearSlot Gear
 	ensure(IsLocallyControlled());
 
 	MoveEquippedItemToCarried(ItemInstanceID, GearSlot);
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
@@ -1030,7 +1037,7 @@ void AFighter::S_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSl
 		}
 		else
 		{
-			RefreshInventoryMenu();
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -1045,7 +1052,7 @@ void AFighter::C_SocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSl
 	ensure(IsLocallyControlled());
 
 	MoveCarriedGemToGearSocket(GearInstanceID, GearSlot, GemInstanceID);
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot GearSlot, int32 GemInstanceID)
@@ -1060,7 +1067,7 @@ void AFighter::S_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot Gear
 		}
 		else
 		{
-			RefreshInventoryMenu();
+			DirtyInventoryMenu();
 		}
 	}
 }
@@ -1075,7 +1082,7 @@ void AFighter::C_UnsocketGem_Implementation(int32 GearInstanceID, EGearSlot Gear
 	ensure(IsLocallyControlled());
 
 	MoveSocketedGemToCarried(GearInstanceID, GearSlot, GemInstanceID);
-	RefreshInventoryMenu();
+	DirtyInventoryMenu();
 }
 
 void AFighter::S_ActivateGem_Implementation(EGearSlot GearSlot, int32 SocketIndex)
@@ -1155,6 +1162,8 @@ void AFighter::S_Damage_Implementation(float Damage)
 	Stats.Health -= Damage;
 
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("Health: %d"), Stats.Health));
+	
+	DirtyHUDMenu(true);
 
 	if (Stats.Health < 0)
 	{
@@ -1177,4 +1186,9 @@ bool AFighter::S_Damage_Validate(float Damage)
 void AFighter::C_Transport_Implementation(FVector NewLocation)
 {
 	SetActorLocation(NewLocation);
+}
+
+void AFighter::OnRep_Stats()
+{
+	DirtyHUDMenu(true);
 }
