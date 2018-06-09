@@ -760,8 +760,8 @@ void AFighter::S_SyncAnimState_Implementation(FVector2D InputDirection, FVector 
 	this->MovementVelocity = Velocity;
 	this->bJumping = bJumping;
 	this->bGrounded = bGrounded;
-	this->bCastLeft = bCastLeft;
-	this->bCastRight = bCastRight;
+	this->bCastLeft = this->bCastLeft || bCastLeft;
+	this->bCastRight = this->bCastRight || bCastRight;
 
 	M_SyncAnimState(InputDirection, Velocity, bJumping, bGrounded, bCastLeft, bCastRight);
 }
@@ -779,8 +779,8 @@ void AFighter::M_SyncAnimState_Implementation(FVector2D InputDirection, FVector 
 		this->bGrounded = bGrounded;
 		this->MovementVelocity = Velocity;
 		this->InputDirection = InputDirection;
-		this->bCastLeft = bCastLeft;
-		this->bCastRight = bCastRight;
+		this->bCastLeft = this->bCastLeft || bCastLeft;
+		this->bCastRight = this->bCastRight || bCastRight;
 	}
 }
 
