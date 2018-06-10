@@ -10,5 +10,7 @@ public class RitesTarget : TargetRules
 		Type = TargetType.Game;
 
 		ExtraModuleNames.AddRange( new string[] { "Rites" } );
-	}
+
+        bUsesSteam = true;
+    }
 }
